@@ -496,3 +496,94 @@
   border-bottom: 2px solid #ffffff;
   box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf;
 }
+
+/* ===== Mobile Responsive (768px and below) ===== */
+@media (max-width: 768px) {
+
+  /* Desktop area scrollable on mobile */
+  .desktop {
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 44px; /* space for taskbar */
+    overflow-x: hidden;
+  }
+
+  /* Icon grid: horizontal row on mobile */
+  .iconGrid {
+    position: relative;
+    top: auto;
+    left: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  /* All windows: full width, no absolute positioning */
+  .window {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    min-height: auto;
+    margin: 4px 0;
+    box-shadow: none;
+  }
+
+  .windowExplorer {
+    width: 100% !important;
+    min-height: auto;
+  }
+
+  /* Explorer body: stack vertically */
+  .explorerBody {
+    flex-direction: column;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  /* Folder panel: full width, horizontal scroll */
+  .folderPanel {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 2px solid #ffffff;
+    flex-shrink: 0;
+  }
+
+  .folderItem {
+    white-space: nowrap;
+    padding: 6px 12px;
+    flex-shrink: 0;
+  }
+
+  /* Right panel: full width below folders */
+  .rightPanel {
+    border-left: none;
+    border-top: 1px solid #c0c0c0;
+  }
+
+  /* File list */
+  .fileList {
+    min-height: 80px;
+  }
+
+  /* Content viewer */
+  .contentViewer {
+    padding: 8px;
+  }
+
+  .contentImage {
+    max-height: none;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Window body for non-explorer windows */
+  .windowBody {
+    min-height: 120px;
+  }
+}
