@@ -23,9 +23,10 @@ const FOLDERS = [
     files: [
       {
         id: "euljiro",
-        name: "을지로 네온",
-        image: "/euljiro_neon.jpg",
-        text: "오래된 골목 사이로 네온이 깜빡인다. 을지로 3가, 이 빛은 언제까지 남아 있을까. 간판 하나하나에 누군가의 하루가 새겨져 있다.",
+        name: "2026_을지로_23시",
+        image: "/euljiro_street.png",
+        audio: "/km007-street-ambience-9267.mp3",
+        text: "불은 아직 켜져 있는데, 사람은 이미 돌아간 뒤였다.",
         mission: "을지로 골목을 걸으며 가장 오래된 간판을 찾아 사진으로 기록하세요.",
       },
       {
@@ -178,6 +179,11 @@ function ExplorerContent() {
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={currentFile.image} alt={currentFile.name} className={styles.contentImage} />
+            {currentFile.audio && (
+              <audio controls src={currentFile.audio} className={styles.audioPlayer}>
+                브라우저가 오디오를 지원하지 않습니다.
+              </audio>
+            )}
             <div className={styles.contentText}>{currentFile.text}</div>
             <div className={styles.contentMission}>
               <span className={styles.contentMissionLabel}>📌 미션:</span>
