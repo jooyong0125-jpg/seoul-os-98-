@@ -170,6 +170,25 @@ export default function Home() {
   const [time, setTime] = useState("");
   const [openWindows, setOpenWindows] = useState({});
 
+  // Boot screen state: "bios" → "logo" → "fadeout" → "done"
+  const [bootPhase, setBootPhase] = useState("bios");
+
+  // Boot sequence timer — runs every visit, no localStorage
+  useEffect(() => {
+    // Phase 1: BIOS screen (1.5s) → Phase 2: Logo screen
+    const t1 = setTimeout(() => setBootPhase("logo"), 1500);
+    // Phase 2: Logo screen (2.2s) → Fade out
+    const t2 = setTimeout(() => setBootPhase("fadeout"), 3700);
+    // Fade out animation (0.4s) → Done
+    const t3 = setTimeout(() => setBootPhase("done"), 4100);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
   useEffect(() => {
     function updateClock() {
       const now = new Date();
@@ -198,6 +217,54 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
+      {/* ===== Boot Screen ===== */}
+      {bootPhase !== "done" && (
+        <>
+          {/* Phase 1: BIOS */}
+          {bootPhase === "bios" && (
+            <div className={`${styles.bootScreen} ${styles.biosScreen}`} id="boot-bios">
+              <div>
+                <span className={styles.biosHighlight}>SeoulOS 98 BIOS v1.0</span>
+              </div>
+              <div>Copyright (C) 2026, Seoul Digital Lab</div>
+              <br />
+              <div>Main Processor : Seoul City Core @ 98MHz</div>
+              <div>Memory Test : <span className={styles.biosHighlight}>65536KB OK</span></div>
+              <br />
+              <div>Detecting Hard Drives...</div>
+              <div>Primary Master : SEOUL-HDD 2.1GB</div>
+              <br />
+              <div>
+                Loading SeoulOS 98... <span className={styles.biosCursor}></span>
+              </div>
+            </div>
+          )}
+
+          {/* Phase 2: Logo + Progress Bar */}
+          {(bootPhase === "logo" || bootPhase === "fadeout") && (
+            <div
+              className={`${styles.bootScreen} ${styles.logoScreen} ${
+                bootPhase === "fadeout" ? styles.fadeOut : ""
+              }`}
+              id="boot-logo"
+            >
+              <div className={styles.logoFlag}>
+                <span className={`${styles.logoFlagBlock} ${styles.flagBlockRed}`}></span>
+                <span className={`${styles.logoFlagBlock} ${styles.flagBlockGreen}`}></span>
+                <span className={`${styles.logoFlagBlock} ${styles.flagBlockBlue}`}></span>
+                <span className={`${styles.logoFlagBlock} ${styles.flagBlockYellow}`}></span>
+              </div>
+              <div className={styles.logoTitle}>SeoulOS 98</div>
+              <div className={styles.logoSubtitle}>서울을 탐색하는 운영체제</div>
+              <div className={styles.progressContainer}>
+                <div className={styles.progressBar}></div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
 
       <div className={styles.desktop} id="desktop">
         {/* Desktop Icons */}

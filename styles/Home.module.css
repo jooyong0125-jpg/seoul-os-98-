@@ -1,5 +1,151 @@
 /* ===== SeoulOS 98 Desktop Styles ===== */
 
+/* ===== Boot Screen ===== */
+.bootScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease-out;
+}
+
+.bootScreen.fadeOut {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Phase 1: BIOS screen */
+.biosScreen {
+  background-color: #000000;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 32px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  color: #aaaaaa;
+  line-height: 1.8;
+}
+
+.biosHighlight {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.biosCursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background-color: #aaaaaa;
+  animation: blink 0.6s step-end infinite;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Phase 2: Logo screen */
+.logoScreen {
+  background-color: #000000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.logoTitle {
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+  text-shadow:
+    2px 2px 0 #000080,
+    4px 4px 0 #404040;
+  letter-spacing: 2px;
+}
+
+.logoSubtitle {
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  font-size: 14px;
+  color: #808080;
+  text-align: center;
+}
+
+/* Windows 98-style colored flag blocks */
+.logoFlag {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.logoFlagBlock {
+  width: 28px;
+  height: 28px;
+  transform: skewX(-10deg);
+}
+
+.flagBlockRed { background-color: #ff0000; }
+.flagBlockGreen { background-color: #00a800; }
+.flagBlockBlue { background-color: #0000ff; }
+.flagBlockYellow { background-color: #ffff00; }
+
+/* Progress bar */
+.progressContainer {
+  width: 220px;
+  height: 20px;
+  background-color: #000000;
+  border: 2px solid #808080;
+  padding: 2px;
+  margin-top: 8px;
+}
+
+.progressBar {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    #000080 0px,
+    #000080 8px,
+    #000000 8px,
+    #000000 10px
+  );
+  animation: progress 2s linear forwards;
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Mobile adjustments for boot screen */
+@media (max-width: 768px) {
+  .biosScreen {
+    padding: 16px;
+    font-size: 11px;
+  }
+
+  .logoTitle {
+    font-size: 32px;
+  }
+
+  .logoFlagBlock {
+    width: 20px;
+    height: 20px;
+  }
+
+  .progressContainer {
+    width: 180px;
+  }
+}
+
 /* Desktop area - the main background */
 .desktop {
   width: 100%;
