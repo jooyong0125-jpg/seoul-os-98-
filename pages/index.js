@@ -72,22 +72,35 @@ const FOLDERS = [
   },
 ];
 
-// ===== Draggable Window Hook =====
+// ===== Draggable Window Hook (fixed) =====
 function useDrag(initialPos) {
   const [pos, setPos] = useState(initialPos);
   const [maximized, setMaximized] = useState(false);
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
   const savedPos = useRef(initialPos);
+  // Use ref to always have latest pos without recreating callback
+  const posRef = useRef(initialPos);
+  posRef.current = pos;
 
   const onMouseDown = useCallback((e) => {
     if (maximized) return;
+    // Prevent text selection while dragging
+    e.preventDefault();
     dragging.current = true;
-    offset.current = { x: e.clientX - pos.left, y: e.clientY - pos.top };
+    offset.current = {
+      x: e.clientX - posRef.current.left,
+      y: e.clientY - posRef.current.top,
+    };
 
-    const onMouseMove = (e) => {
+    const onMouseMove = (moveEvent) => {
       if (!dragging.current) return;
-      setPos({ top: e.clientY - offset.current.y, left: e.clientX - offset.current.x });
+      // Clamp so the title bar stays on screen
+      const newLeft = moveEvent.clientX - offset.current.x;
+      const newTop = moveEvent.clientY - offset.current.y;
+      const clampedTop = Math.max(0, Math.min(newTop, window.innerHeight - 40));
+      const clampedLeft = Math.max(-200, Math.min(newLeft, window.innerWidth - 60));
+      setPos({ top: clampedTop, left: clampedLeft });
     };
     const onMouseUp = () => {
       dragging.current = false;
@@ -96,20 +109,20 @@ function useDrag(initialPos) {
     };
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-  }, [pos, maximized]);
+  }, [maximized]); // No longer depends on pos — uses posRef instead
 
   const toggleMaximize = useCallback(() => {
     if (maximized) {
       setPos(savedPos.current);
       setMaximized(false);
     } else {
-      savedPos.current = pos;
+      savedPos.current = posRef.current;
       setPos({ top: 0, left: 0 });
       setMaximized(true);
     }
-  }, [maximized, pos]);
+  }, [maximized]);
 
-  return { pos, maximized, onMouseDown, toggleMaximize, setPos };
+  return { pos, maximized, onMouseDown, toggleMaximize };
 }
 
 // ===== Explorer Content Component =====
@@ -168,16 +181,17 @@ function ExplorerContent() {
   );
 }
 
-// ===== Draggable Window Component =====
-function DraggableWindow({ id, title, isExplorer, isFocused, onClose, onFocus, children }) {
+// ===== Draggable Window Component (fixed) =====
+// minimized state is now controlled by parent via props
+function DraggableWindow({ id, title, isExplorer, isFocused, isMinimized, onClose, onFocus, onMinimize, children }) {
   const defaults = WINDOW_DEFAULTS[id] || { top: 80, left: 150, width: 450, height: 300 };
   const { pos, maximized, onMouseDown, toggleMaximize } = useDrag({
     top: defaults.top,
     left: defaults.left,
   });
-  const [minimized, setMinimized] = useState(false);
 
-  if (minimized) return null;
+  // If minimized, hide but don't unmount (preserves internal state like explorer selection)
+  if (isMinimized) return null;
 
   return (
     <div
@@ -194,13 +208,17 @@ function DraggableWindow({ id, title, isExplorer, isFocused, onClose, onFocus, c
     >
       <div
         className={`${styles.titleBar} ${!isFocused ? styles.titleBarInactive : ""}`}
-        onMouseDown={onMouseDown}
+        onMouseDown={(e) => {
+          // Only drag with left mouse button, and not on the buttons area
+          if (e.target.closest(`.${styles.titleButtons}`)) return;
+          onMouseDown(e);
+        }}
       >
         <span className={styles.titleText}>{title}</span>
         <div className={styles.titleButtons}>
           <button
             className={styles.titleBtn}
-            onClick={(e) => { e.stopPropagation(); setMinimized(true); }}
+            onClick={(e) => { e.stopPropagation(); onMinimize(); }}
             aria-label="최소화"
           >
             _
@@ -233,7 +251,6 @@ function StartMenu({ onOpenWindow, onClose }) {
   useEffect(() => {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
-        // Don't close if clicking the start button itself (parent handles toggle)
         if (e.target.closest('#start-button')) return;
         onClose();
       }
@@ -244,7 +261,6 @@ function StartMenu({ onOpenWindow, onClose }) {
 
   return (
     <div className={styles.startMenu} id="start-menu" ref={menuRef}>
-      {/* Left blue banner */}
       <div className={styles.startMenuBanner}>
         <span className={styles.bannerText}>SeoulOS 98</span>
       </div>
@@ -281,11 +297,12 @@ export default function Home() {
   const [time, setTime] = useState("");
   // Track open windows: { [id]: true/false }
   const [openWindows, setOpenWindows] = useState({});
+  // Track minimized windows: { [id]: true/false }
+  const [minimizedWindows, setMinimizedWindows] = useState({});
   // Track which window is focused (topmost)
   const [focusedWindow, setFocusedWindow] = useState(null);
   // Start menu visibility
   const [startMenuOpen, setStartMenuOpen] = useState(false);
-
   // Boot screen state
   const [bootPhase, setBootPhase] = useState("bios");
 
@@ -308,14 +325,46 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Open window (or restore if minimized, or bring to front if already open)
   function openWindow(id) {
-    setOpenWindows((prev) => ({ ...prev, [id]: true }));
-    setFocusedWindow(id);
+    if (openWindows[id]) {
+      // Already open — un-minimize if needed, and bring to front
+      if (minimizedWindows[id]) {
+        setMinimizedWindows((prev) => ({ ...prev, [id]: false }));
+      }
+      setFocusedWindow(id);
+    } else {
+      // Not open — open fresh
+      setOpenWindows((prev) => ({ ...prev, [id]: true }));
+      setMinimizedWindows((prev) => ({ ...prev, [id]: false }));
+      setFocusedWindow(id);
+    }
   }
 
   function closeWindow(id) {
     setOpenWindows((prev) => ({ ...prev, [id]: false }));
+    setMinimizedWindows((prev) => ({ ...prev, [id]: false }));
     if (focusedWindow === id) setFocusedWindow(null);
+  }
+
+  function minimizeWindow(id) {
+    setMinimizedWindows((prev) => ({ ...prev, [id]: true }));
+    if (focusedWindow === id) setFocusedWindow(null);
+  }
+
+  // Taskbar button click: toggle minimize/restore
+  function onTaskbarButtonClick(id) {
+    if (minimizedWindows[id]) {
+      // Restore from minimized
+      setMinimizedWindows((prev) => ({ ...prev, [id]: false }));
+      setFocusedWindow(id);
+    } else if (focusedWindow === id) {
+      // Already focused — minimize it
+      minimizeWindow(id);
+    } else {
+      // Not focused — bring to front
+      setFocusedWindow(id);
+    }
   }
 
   return (
@@ -394,8 +443,10 @@ export default function Home() {
               title={icon.label}
               isExplorer={icon.id === "explorer"}
               isFocused={focusedWindow === icon.id}
+              isMinimized={!!minimizedWindows[icon.id]}
               onClose={() => closeWindow(icon.id)}
               onFocus={() => setFocusedWindow(icon.id)}
+              onMinimize={() => minimizeWindow(icon.id)}
             >
               {icon.id === "explorer" ? <ExplorerContent /> : <div className={styles.windowBody}></div>}
             </DraggableWindow>
@@ -411,7 +462,7 @@ export default function Home() {
         )}
 
         {/* Taskbar */}
-        <div className={styles.taskbar} id="taskbar">
+        <div className={styles.taskbar} id="taskbar" onClick={(e) => e.stopPropagation()}>
           <div className={styles.taskbarLeft}>
             <button
               className={`${styles.startButton} ${startMenuOpen ? styles.startButtonActive : ""}`}
@@ -435,9 +486,11 @@ export default function Home() {
                 <button
                   key={`taskbar-${icon.id}`}
                   className={`${styles.taskbarWindowBtn} ${
-                    focusedWindow === icon.id ? styles.taskbarWindowBtnActive : ""
+                    focusedWindow === icon.id && !minimizedWindows[icon.id]
+                      ? styles.taskbarWindowBtnActive
+                      : ""
                   }`}
-                  onClick={() => setFocusedWindow(icon.id)}
+                  onClick={() => onTaskbarButtonClick(icon.id)}
                 >
                   {icon.label}
                 </button>
