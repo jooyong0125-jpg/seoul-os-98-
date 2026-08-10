@@ -609,9 +609,9 @@
 
 .contentImage {
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  height: auto;
   border: 1px solid #808080;
+  display: block;
 }
 
 .audioPlayer {
