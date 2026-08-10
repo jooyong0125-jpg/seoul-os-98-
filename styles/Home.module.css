@@ -629,6 +629,7 @@
   color: #000000;
   line-height: 1.6;
   margin: 8px 12px;
+  white-space: pre-wrap;
 }
 
 .contentMission {
@@ -646,6 +647,31 @@
 .contentMissionLabel {
   color: #cc0000;
   margin-right: 4px;
+}
+
+.restoreButton {
+  align-self: center;
+  padding: 6px 16px;
+  margin: 0 12px 24px 12px;
+  background-color: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
+  cursor: pointer;
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.restoreButton:active {
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf;
 }
 
 .backButton {

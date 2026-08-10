@@ -31,10 +31,11 @@ const FOLDERS = [
       },
       {
         id: "hangang",
-        name: "밤 한강",
-        image: "/night_hangang.jpg",
-        text: "달빛이 강 위에 부서진다. 다리 아래 바람이 불 때마다 서울의 소리가 들린다. 이 강은 늘 여기 있었다.",
-        mission: "밤 한강에서 가장 마음에 드는 다리를 골라 그 위에서 바람 소리를 녹음하세요.",
+        name: "2026_한강_23시",
+        image: "/hangangnight.jpg",
+        audio: "/hangangrivernight.mp3",
+        text: "다리 위로는 차들이 지나갔고, 다리 밑에는 밤이 고여 있었다.\n\n한강 다리 밑의 밤은 도시에서 가장 조용한 곳 중 하나다. 다리 위로 차들이 지나가는 소리가 멀어지고, 물이 흐르는 소리만 낮게 남는다. 사람들은 이곳에 와서 잠시 아무것도 하지 않는다.",
+        mission: "한강 다리 밑에 앉아, 눈을 감고 들리는 소리를 3가지만 적어보세요.",
       },
       {
         id: "gwangjang",
@@ -189,6 +190,12 @@ function ExplorerContent() {
               <span className={styles.contentMissionLabel}>📌 미션:</span>
               {currentFile.mission}
             </div>
+            <button
+              className={styles.restoreButton}
+              onClick={() => alert("내 하드에 성공적으로 복구되었습니다.")}
+            >
+              내 하드에 복구
+            </button>
           </div>
         ) : (
           <div className={styles.fileList}>
