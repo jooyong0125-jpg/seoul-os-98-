@@ -602,6 +602,10 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
 }
 
 .contentImage {
@@ -616,7 +620,7 @@
 .audioPlayer {
   width: calc(100% - 24px);
   height: 32px;
-  margin: 12px 12px 0 12px;
+  margin: 4px 12px;
 }
 
 .contentText {
@@ -624,7 +628,7 @@
   font-size: 12px;
   color: #000000;
   line-height: 1.6;
-  margin: 12px;
+  margin: 8px 12px;
 }
 
 .contentMission {
@@ -647,7 +651,7 @@
 .backButton {
   align-self: flex-start;
   padding: 2px 10px;
-  margin: 12px 12px 10px 12px;
+  margin: 12px 12px 0 12px;
   background-color: #c0c0c0;
   border: none;
   cursor: pointer;
