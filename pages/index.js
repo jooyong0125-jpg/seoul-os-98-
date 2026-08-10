@@ -88,27 +88,45 @@ function useDrag(initialPos) {
     // Prevent text selection while dragging
     e.preventDefault();
     dragging.current = true;
+    
+    // Support both mouse and touch events
+    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
     offset.current = {
-      x: e.clientX - posRef.current.left,
-      y: e.clientY - posRef.current.top,
+      x: clientX - posRef.current.left,
+      y: clientY - posRef.current.top,
     };
 
     const onMouseMove = (moveEvent) => {
       if (!dragging.current) return;
+      const moveClientX = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const moveClientY = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      
       // Clamp so the title bar stays on screen
-      const newLeft = moveEvent.clientX - offset.current.x;
-      const newTop = moveEvent.clientY - offset.current.y;
-      const clampedTop = Math.max(0, Math.min(newTop, window.innerHeight - 40));
-      const clampedLeft = Math.max(-200, Math.min(newLeft, window.innerWidth - 60));
+      const newLeft = moveClientX - offset.current.x;
+      const newTop = moveClientY - offset.current.y;
+      
+      // Improve boundaries for mobile (prevent going completely off-screen horizontally, and keep title bar visible vertically)
+      const clampedTop = Math.max(0, Math.min(newTop, window.innerHeight - 30));
+      // Allow window to be dragged partially off-screen, but keep at least 50px visible
+      const clampedLeft = Math.max(-window.innerWidth + 50, Math.min(newLeft, window.innerWidth - 50));
+      
       setPos({ top: clampedTop, left: clampedLeft });
     };
+    
     const onMouseUp = () => {
       dragging.current = false;
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("touchmove", onMouseMove);
+      document.removeEventListener("touchend", onMouseUp);
     };
+    
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("touchmove", onMouseMove, { passive: false });
+    document.addEventListener("touchend", onMouseUp);
   }, [maximized]); // No longer depends on pos — uses posRef instead
 
   const toggleMaximize = useCallback(() => {
@@ -205,11 +223,16 @@ function DraggableWindow({ id, title, isExplorer, isFocused, isMinimized, onClos
           : { top: pos.top, left: pos.left, zIndex: isFocused ? 200 : 100 }
       }
       onMouseDown={onFocus}
+      onTouchStart={onFocus}
     >
       <div
         className={`${styles.titleBar} ${!isFocused ? styles.titleBarInactive : ""}`}
         onMouseDown={(e) => {
           // Only drag with left mouse button, and not on the buttons area
+          if (e.target.closest(`.${styles.titleButtons}`)) return;
+          onMouseDown(e);
+        }}
+        onTouchStart={(e) => {
           if (e.target.closest(`.${styles.titleButtons}`)) return;
           onMouseDown(e);
         }}

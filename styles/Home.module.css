@@ -784,47 +784,45 @@
 
   /* Desktop area scrollable on mobile */
   .desktop {
-    height: auto;
-    min-height: 100vh;
-    padding-bottom: 44px;
-    overflow-x: hidden;
+    height: 100vh;
+    overflow: hidden;
   }
 
   /* Icon grid: horizontal row on mobile */
   .iconGrid {
-    position: relative;
-    top: auto;
-    left: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 12px;
     padding: 12px;
   }
+  
+  .iconLabel {
+    font-size: 14px;
+    padding: 2px 4px;
+  }
 
-  /* All windows: full width, no absolute positioning */
+  /* Keep windows absolute for dragging, but constrain width */
   .window {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: auto;
-    margin: 4px 0;
-    box-shadow: none;
+    width: calc(100% - 16px) !important;
+    max-width: 100% !important;
   }
 
   .windowExplorer {
-    width: 100% !important;
-    min-height: auto;
+    width: calc(100% - 16px) !important;
   }
 
-  .windowMaximized {
-    height: auto !important;
-  }
-
-  /* Disable drag cursor on mobile */
+  /* Make title bar easier to grab */
   .titleBar {
-    cursor: default;
+    padding: 4px;
+    min-height: 28px;
+  }
+  
+  .titleText {
+    font-size: 14px;
+  }
+
+  /* Larger buttons for touch */
+  .titleBtn {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
   }
 
   /* Explorer body: stack vertically */
@@ -848,7 +846,8 @@
 
   .folderItem {
     white-space: nowrap;
-    padding: 6px 12px;
+    padding: 10px 16px;
+    font-size: 14px;
     flex-shrink: 0;
   }
 
@@ -856,14 +855,25 @@
   .rightPanel {
     border-left: none;
     border-top: 1px solid #c0c0c0;
+    max-height: 50vh;
+    overflow-y: auto;
   }
 
-  .fileList {
-    min-height: 80px;
+  .fileItem {
+    padding: 10px;
+    font-size: 14px;
   }
 
   .contentViewer {
-    padding: 8px;
+    padding: 12px;
+  }
+  
+  .contentText {
+    font-size: 14px;
+  }
+  
+  .contentMission {
+    font-size: 14px;
   }
 
   .contentImage {
@@ -878,13 +888,33 @@
 
   /* Start menu: slightly wider on mobile */
   .startMenu {
-    width: 220px;
+    width: 260px;
+    bottom: 40px;
+  }
+  
+  .startMenuItem {
+    font-size: 14px;
+    padding: 10px 12px;
   }
 
-  /* Taskbar window buttons: smaller on mobile */
+  /* Taskbar and buttons larger for touch */
+  .taskbar {
+    height: 40px;
+  }
+  
+  .startButton {
+    font-size: 14px;
+    padding: 4px 8px;
+  }
+
   .taskbarWindowBtn {
-    max-width: 80px;
-    font-size: 10px;
-    padding: 2px 4px;
+    max-width: 100px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  .tray {
+    font-size: 12px;
+    padding: 4px 8px;
   }
 }
