@@ -191,7 +191,8 @@
   box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
 }
 
-.startButton:active {
+.startButton:active,
+.startButtonActive {
   border-top: 2px solid #404040;
   border-left: 2px solid #404040;
   border-right: 2px solid #ffffff;
@@ -374,6 +375,24 @@
   justify-content: space-between;
   padding: 0 3px;
   flex-shrink: 0;
+  cursor: grab;
+}
+
+.titleBar:active {
+  cursor: grabbing;
+}
+
+/* Inactive (unfocused) title bar */
+.titleBarInactive {
+  background: linear-gradient(90deg, #808080, #b0b0b0);
+}
+
+/* Maximized window */
+.windowMaximized {
+  width: 100% !important;
+  height: calc(100vh - 36px) !important;
+  top: 0 !important;
+  left: 0 !important;
 }
 
 .titleText {
@@ -394,8 +413,8 @@
   flex-shrink: 0;
 }
 
-/* X close button */
-.closeButton {
+/* Title bar buttons (minimize, maximize, close) */
+.titleBtn {
   width: 18px;
   height: 18px;
   background-color: #c0c0c0;
@@ -418,7 +437,7 @@
   box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
 }
 
-.closeButton:active {
+.titleBtn:active {
   border-top: 2px solid #404040;
   border-left: 2px solid #404040;
   border-right: 2px solid #ffffff;
@@ -643,6 +662,123 @@
   box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf;
 }
 
+/* ===== Taskbar Layout ===== */
+.taskbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Taskbar window buttons */
+.taskbarWindowBtn {
+  height: 24px;
+  padding: 2px 8px;
+  background-color: #c0c0c0;
+  border: none;
+  cursor: pointer;
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  font-size: 11px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #404040;
+  border-bottom: 2px solid #404040;
+  box-shadow: inset -1px -1px 0 #808080, inset 1px 1px 0 #dfdfdf;
+}
+
+.taskbarWindowBtnActive {
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #dfdfdf;
+  font-weight: bold;
+}
+
+/* ===== Start Menu ===== */
+.startMenu {
+  position: fixed;
+  bottom: 36px;
+  left: 0;
+  width: 200px;
+  background-color: #c0c0c0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: row;
+
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #404040;
+  border-bottom: none;
+  box-shadow: 2px -2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Left blue banner */
+.startMenuBanner {
+  width: 24px;
+  background: linear-gradient(0deg, #000080, #1084d0);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.bannerText {
+  color: #ffffff;
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 1px;
+}
+
+.startMenuItems {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0;
+}
+
+.startMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, sans-serif;
+  font-size: 12px;
+  color: #000000;
+}
+
+.startMenuItem:hover {
+  background-color: #000080;
+  color: #ffffff;
+}
+
+.startMenuIcon {
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.startMenuDivider {
+  height: 1px;
+  margin: 2px 4px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #ffffff;
+}
+
 /* ===== Mobile Responsive (768px and below) ===== */
 @media (max-width: 768px) {
 
@@ -650,7 +786,7 @@
   .desktop {
     height: auto;
     min-height: 100vh;
-    padding-bottom: 44px; /* space for taskbar */
+    padding-bottom: 44px;
     overflow-x: hidden;
   }
 
@@ -671,6 +807,7 @@
     top: auto !important;
     left: auto !important;
     width: 100% !important;
+    height: auto !important;
     min-height: auto;
     margin: 4px 0;
     box-shadow: none;
@@ -679,6 +816,15 @@
   .windowExplorer {
     width: 100% !important;
     min-height: auto;
+  }
+
+  .windowMaximized {
+    height: auto !important;
+  }
+
+  /* Disable drag cursor on mobile */
+  .titleBar {
+    cursor: default;
   }
 
   /* Explorer body: stack vertically */
@@ -712,12 +858,10 @@
     border-top: 1px solid #c0c0c0;
   }
 
-  /* File list */
   .fileList {
     min-height: 80px;
   }
 
-  /* Content viewer */
   .contentViewer {
     padding: 8px;
   }
@@ -728,8 +872,19 @@
     height: auto;
   }
 
-  /* Window body for non-explorer windows */
   .windowBody {
     min-height: 120px;
+  }
+
+  /* Start menu: slightly wider on mobile */
+  .startMenu {
+    width: 220px;
+  }
+
+  /* Taskbar window buttons: smaller on mobile */
+  .taskbarWindowBtn {
+    max-width: 80px;
+    font-size: 10px;
+    padding: 2px 4px;
   }
 }
