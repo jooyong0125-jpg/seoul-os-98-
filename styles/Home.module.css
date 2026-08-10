@@ -606,7 +606,8 @@
 
 .contentImage {
   width: 100%;
-  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   display: block;
   border-top: 1px solid #808080;
   border-bottom: 1px solid #808080;
@@ -883,9 +884,9 @@
   }
 
   .contentImage {
-    max-height: none;
     width: 100%;
-    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
   }
 
   .windowBody {
