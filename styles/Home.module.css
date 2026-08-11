@@ -608,6 +608,11 @@
   padding: 0;
 }
 
+.contentImageBlock {
+  display: block;
+  width: 100%;
+}
+
 .contentImageWrapper {
   width: 100%;
   padding-bottom: 75%; /* Forces 4:3 aspect ratio */

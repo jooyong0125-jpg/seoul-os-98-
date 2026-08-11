@@ -178,9 +178,11 @@ function ExplorerContent() {
             <button className={styles.backButton} onClick={() => setSelectedFile(null)}>
               ← 뒤로
             </button>
-            <div className={styles.contentImageWrapper}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={currentFile.image} alt={currentFile.name} className={styles.contentImage} />
+            <div className={styles.contentImageBlock}>
+              <div className={styles.contentImageWrapper}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={currentFile.image} alt={currentFile.name} className={styles.contentImage} />
+              </div>
             </div>
             {currentFile.audio && (
               <audio controls src={currentFile.audio} className={styles.audioPlayer}>
