@@ -32,7 +32,7 @@ const FOLDERS = [
       {
         id: "hangang",
         name: "2026_한강_23시",
-        image: "/hangangnight.jpg",
+        image: "/hangangnight.jpg?v=20260811",
         audio: "/hangangrivernight.mp3",
         text: "다리 위로는 차들이 지나갔고, 다리 밑에는 밤이 고여 있었다.\n\n한강 다리 밑의 밤은 도시에서 가장 조용한 곳 중 하나다. 다리 위로 차들이 지나가는 소리가 멀어지고, 물이 흐르는 소리만 낮게 남는다. 사람들은 이곳에 와서 잠시 아무것도 하지 않는다.",
         mission: "한강 다리 밑에 앉아, 눈을 감고 들리는 소리를 3가지만 적어보세요.",
