@@ -646,6 +646,9 @@
   line-height: 1.6;
   margin: 8px 12px;
   white-space: pre-wrap;
+  min-height: 80px;
+  max-height: 80px;
+  overflow-y: auto;
 }
 
 .contentMission {
