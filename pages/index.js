@@ -24,7 +24,7 @@ const FOLDERS = [
       {
         id: "euljiro",
         name: "2026_을지로_23시",
-        image: "/euljiro_street.png",
+        image: "/euljiro_street.png?v=20260811",
         audio: "/km007-street-ambience-9267.mp3",
         text: "불은 아직 켜져 있는데, 사람은 이미 돌아간 뒤였다.",
         mission: "을지로 골목을 걸으며 가장 오래된 간판을 찾아 사진으로 기록하세요.",
