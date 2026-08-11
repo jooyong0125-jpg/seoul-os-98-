@@ -181,22 +181,7 @@ function ExplorerContent() {
             <div className={styles.contentImageBlock}>
               <div className={styles.contentImageWrapper}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={currentFile.image}
-                  alt={currentFile.name}
-                  className={styles.contentImage}
-                  onLoad={(e) => {
-                    const img = e.target;
-                    const wrapper = img.parentElement;
-                    const block = wrapper.parentElement;
-                    console.log(`[DEBUG] 파일: ${currentFile.name}`);
-                    console.log(`[DEBUG] img naturalSize: ${img.naturalWidth}x${img.naturalHeight}`);
-                    console.log(`[DEBUG] img rendered: ${img.getBoundingClientRect().width.toFixed(1)}x${img.getBoundingClientRect().height.toFixed(1)}`);
-                    console.log(`[DEBUG] wrapper rendered: ${wrapper.getBoundingClientRect().width.toFixed(1)}x${wrapper.getBoundingClientRect().height.toFixed(1)}`);
-                    console.log(`[DEBUG] block rendered: ${block.getBoundingClientRect().width.toFixed(1)}x${block.getBoundingClientRect().height.toFixed(1)}`);
-                    console.log(`[DEBUG] wrapper computedStyle:`, window.getComputedStyle(wrapper).cssText);
-                  }}
-                />
+                <img src={currentFile.image} alt={currentFile.name} className={styles.contentImage} />
               </div>
             </div>
             {currentFile.audio && (
