@@ -750,7 +750,7 @@ const Dialog = (() => {
 
 const Toast = (() => {
   let timer = null;
-  function show(title, msg) {
+  function show(title, msg, duration = 4200) {
     const el = document.getElementById('toast');
     document.getElementById('toast-title').textContent = title;
     document.getElementById('toast-body').textContent = msg;
@@ -758,7 +758,7 @@ const Toast = (() => {
     el.classList.add('active');
     Sfx.ding();
     clearTimeout(timer);
-    timer = setTimeout(() => { el.style.display = 'none'; }, 4200);
+    timer = setTimeout(() => { el.style.display = 'none'; }, duration);
   }
   return { show };
 })();
