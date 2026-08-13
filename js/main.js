@@ -364,7 +364,6 @@ const Tray = (() => {
 
 /* ── 부팅 시퀀스 ───────────────────────────────────────────────────────── */
 const Boot = (() => {
-  const ONBOARDING_VERSION = 4;
   const fast = () => !State.firstBoot;
   let done = false;
   let naming = false;
@@ -427,13 +426,10 @@ const Boot = (() => {
     if (done || naming) return;
     document.getElementById('boot-fill').style.width = '100%';
     document.getElementById('boot-pct').textContent = '100%';
-    if (State.profilePromptVersion >= ONBOARDING_VERSION) { enter(); return; }
-
     naming = true;
     const wrap = document.getElementById('boot-name-wrap');
     const input = document.getElementById('boot-name');
-    const savedName = String(State.name || '').trim();
-    input.value = savedName === '이름 없는 복구자' ? '' : savedName;
+    input.value = '';
     document.getElementById('boot-skip').classList.add('hidden');
     wrap.classList.remove('hidden');
     input.focus();
@@ -441,7 +437,6 @@ const Boot = (() => {
     const submit = useInput => {
       if (done) return;
       State.name = useInput && input.value.trim() ? input.value.trim() : '이름 없는 복구자';
-      State.profilePromptVersion = ONBOARDING_VERSION;
       enter();
     };
     document.getElementById('boot-enter').addEventListener('click', () => submit(true), { once: true });
@@ -451,8 +446,6 @@ const Boot = (() => {
 
   function enter() {
     if (done) return; done = true;
-    const shouldWelcome = State.welcomeVersion < ONBOARDING_VERSION;
-    const shouldShowManual = State.manualVersion < ONBOARDING_VERSION;
     State.firstBoot = false;
     Sfx.startup();
     const boot = document.getElementById('boot');
@@ -463,23 +456,16 @@ const Boot = (() => {
       Desktop.show();
       StartMenu.render();
       Tray.init();
-      const openFirstContent = () => {
-        if (shouldShowManual) Apps.help(true, ONBOARDING_VERSION);
-        else {
-          Apps.todaysFile();
-          if (!shouldWelcome) Toast.show('보관소 연결 완료', '오늘의 기억 신호를 확인하세요.');
-        }
-      };
-
-      if (shouldWelcome) {
-        const savedName = String(State.name || '').trim().replace(/\s*님$/, '');
-        const welcomeName = !savedName || savedName === '이름 없는 복구자' ? '복구자' : savedName;
-        State.welcomeVersion = ONBOARDING_VERSION;
-        Toast.show(`${welcomeName} 님, 환영합니다.`, '서울의 기억 보관소에 접속했습니다.', 2100);
-        setTimeout(openFirstContent, 2300);
-      } else {
-        setTimeout(openFirstContent, 620);
-      }
+      const savedName = String(State.name || '').trim().replace(/\s*님$/, '');
+      const welcomeName = !savedName || savedName === '이름 없는 복구자' ? '복구자' : savedName;
+      Dialog.custom({
+        title: 'SeoulOS 98 시작',
+        icon: ICON.info,
+        width: 360,
+        html: `<p><b>${Safe.html(welcomeName)} 님, 환영합니다.</b></p><p>서울의 기억 보관소에 접속했습니다.</p>`,
+        buttons: [{ label: '사용 설명서 보기', default: true }],
+        onClose: () => setTimeout(() => Apps.help(true), 120)
+      });
     }, 500);
   }
 
