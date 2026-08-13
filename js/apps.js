@@ -24,10 +24,24 @@ const ICON = {
 const bigIcon = (svg) => svg.replace('width="16" height="16"', 'width="44" height="44"')
                             .replace('width="32" height="32"', 'width="44" height="44"');
 
+const Safe = {
+  html(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+};
+
 /* ── 상태 (localStorage) ──────────────────────────────────────────────── */
 const State = (() => {
   const KEY = 'seoulos98.save.v1';
-  const def = { name: '', recovered: [], corruptFound: [], firstBoot: true, crt: true, muted: false, helpSeen: false };
+  const def = {
+    name: '', recovered: [], corruptFound: [], firstBoot: true,
+    crt: true, muted: false, helpSeen: false, introSeen: false
+  };
   let s;
   try { s = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
   catch (e) { s = Object.assign({}, def); }
@@ -55,6 +69,8 @@ const State = (() => {
     set muted(v) { s.muted = v; save(); },
     get helpSeen() { return s.helpSeen; },
     set helpSeen(v) { s.helpSeen = v; save(); },
+    get introSeen() { return s.introSeen; },
+    set introSeen(v) { s.introSeen = v; save(); },
     reset() { s = Object.assign({}, def); save(); }
   };
 })();
@@ -80,15 +96,21 @@ const Content = (() => {
     const day = Math.floor(Date.now() / 86400000);
     return db.memories[day % db.memories.length];
   }
-  return { load, get db() { return db; }, todays };
+  function assetUrl(path) {
+    if (!path || /^(https?:|data:|blob:)/i.test(path)) return path || '';
+    const local = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    return local ? `https://seoul-os-98.vercel.app/${String(path).replace(/^\//, '')}` : path;
+  }
+  return { load, get db() { return db; }, todays, assetUrl };
 })();
 
 /* =========================================================================
    앱 (Apps)
    ========================================================================= */
 const Apps = (() => {
+  const oneTap = () => window.innerWidth <= 640 || window.matchMedia('(pointer: coarse)').matches;
 
-  /* ── 02. 오늘의 기억 파일 (배달 대화상자) ── */
+  /* ── 02. 오늘의 기억 파일 (작은 신호 알림) ── */
   function todaysFile() {
     const mem = Content.todays();
     if (!mem) { Dialog.info('오류', '오늘의 파일을 불러올 수 없습니다.'); return; }
@@ -97,86 +119,118 @@ const Apps = (() => {
     const body = document.createElement('div');
     body.className = 'window-body';
     body.innerHTML = `
-      <div class="mail-body">
-        <span class="big-icon">${bigIcon(ICON.mail)}</span>
+      <div class="signal-body">
+        <span class="signal-led" aria-hidden="true"></span>
         <div>
-          <p><b>오늘의 기억이 도착했습니다.</b></p>
-          <p class="fname">${mem.title}.${mem.ext} &nbsp;<span class="dim">(${mem.date})</span></p>
-          <p class="dim" style="font-size:11px">발신: SEOUL.SYS &nbsp;·&nbsp; 24시간 뒤 사라집니다.</p>
-          ${recovered ? `<p class="neon2" style="font-size:11px">※ 이미 내 하드에 복구된 파일입니다.</p>` : ''}
+          <p class="signal-kicker">SEOUL.SYS / INCOMING</p>
+          <p><b>새 기억 신호를 감지했습니다.</b></p>
+          <p class="signal-file">${Safe.html(mem.title)}.${Safe.html(mem.ext)}</p>
+          <p class="signal-note">${Safe.html(mem.place || '서울')} · ${Safe.html(mem.date)}</p>
+          ${recovered ? '<p class="signal-saved">이미 복구된 기록입니다.</p>' : ''}
         </div>
       </div>
-      <div class="mail-actions">
-        <button class="default" data-act="open">파일 열기</button>
-        <button data-act="cancel">취소</button>
+      <div class="signal-actions">
+        <span>신호 분석 완료</span>
+        <button class="default" data-act="open">보관소 열기</button>
       </div>`;
-    const win = WM.open({ id: 'today', title: '오늘의 기억 배달', icon: ICON.mail, width: 340, className: 'mailwin', body });
+    WM.open({
+      id: 'today', title: '복구국 알림', icon: ICON.mail, width: 330,
+      className: 'signalwin', body, noMin: true, noMax: true,
+      x: Math.max(8, window.innerWidth - 350), y: Math.max(8, window.innerHeight - 244)
+    });
     body.querySelector('[data-act=open]').addEventListener('click', () => { WM.close('today'); viewer(mem); });
-    body.querySelector('[data-act=cancel]').addEventListener('click', () => WM.close('today'));
   }
 
-  /* ── 03. 파일 뷰어 (사진 · 소리 · 문장) ── */
+  /* ── 03. 시립기억보관소 (사진 · 소리 · 문장 · 복구) ── */
   let viewerAudioId = null;
   function viewer(mem) {
     const id = 'view_' + mem.id;
     const already = State.isRecovered(mem.id);
+    const recordId = `SEOUL-${String(mem.date || '').replace(/-/g, '')}-${String(mem.id).replace(/[^a-z0-9]/gi, '').slice(-5).toUpperCase()}`;
+    const sourceState = mem.author === 'user' ? '사용자 기록' : '샘플 자료 · 출처 보강 필요';
     const body = document.createElement('div');
     body.className = 'window-body';
     body.innerHTML = `
-      <div class="viewer-main">
-        <div class="viewer-photo">
-          <img src="${mem.image}" alt="${mem.title}" draggable="false"
-               onerror="this.style.opacity=0;this.parentNode.style.background='#111'">
-          <div class="scan"></div><div class="noise"></div>
+      <div class="archive-shell">
+        <div class="menu-bar archive-menu"><span><u>파</u>일</span><span><u>편</u>집</span><span><u>보</u>기</span><span><u>도</u>구</span><span><u>도</u>움말</span></div>
+        <div class="archive-meta" aria-label="기록 정보">
+          <div><span>RECORD ID</span><b>${Safe.html(recordId)}</b></div>
+          <div><span>수집 일자</span><b>${Safe.html(mem.date)}</b></div>
+          <div><span>위치</span><b>${Safe.html(mem.place || '서울')}</b></div>
+          <div><span>상태</span><b class="archive-source">${Safe.html(sourceState)}</b></div>
         </div>
-        <div class="viewer-text">
-          <div class="yr">▶ ${mem.date} · ${mem.place || '서울'}</div>
-          <div style="height:8px"></div>
-          <div class="vt-body"></div>
-          <span class="cursor blink">_</span>
+        <div class="archive-work">
+          <aside class="archive-tree bevel-in" aria-label="기억 보관함">
+            <div class="archive-tree-title">${ICON.folderOpen}<span>기억 보관함</span></div>
+            <button class="archive-node selected" data-nav="today">${ICON.mail}<span>오늘 도착함</span><b>1</b></button>
+            <button class="archive-node" data-nav="recovered">${ICON.folder}<span>복구된 기억</span><b>${State.recovered.length}</b></button>
+            <button class="archive-node" data-nav="corrupt">${ICON.broken}<span>손상 파일</span><b>${Content.db.corrupted.length}</b></button>
+            <div class="archive-tree-rule"></div>
+            <div class="archive-tree-foot">SEOUL MUNICIPAL<br>MEMORY ARCHIVE</div>
+          </aside>
+          <div class="archive-photo viewer-photo">
+            <img src="${Safe.html(Content.assetUrl(mem.image))}" alt="${Safe.html(mem.title)}" draggable="false">
+            <div class="scan"></div><div class="noise"></div>
+            <div class="archive-photo-label">${Safe.html(mem.title)}.${Safe.html(mem.ext)}</div>
+          </div>
         </div>
-      </div>
-      <div class="transport bevel-thin-in">
-        <button class="tp-btn" data-act="play" title="재생/일시정지">
-          <svg viewBox="0 0 12 12"><path d="M2 1l8 5-8 5z" fill="#000"/></svg>
-        </button>
-        <button class="tp-btn" data-act="stop" title="정지">
-          <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" fill="#000"/></svg>
-        </button>
-        <div class="seek bevel-in"><div class="track"></div><div class="fill"></div></div>
-        <span class="tp-time pixel">00:00 / 00:00</span>
-      </div>
-      <div class="viewer-meta">
-        <span class="cell bevel-thin-in">파일: ${mem.title}.${mem.ext}</span>
-        <span class="cell bevel-thin-in">형식: ${mem.sound ? '사진+소리+문장' : '사진+문장'}</span>
-      </div>
-      <div class="mail-actions" style="padding:8px 10px">
-        <button class="default" data-act="recover" ${already ? 'disabled' : ''}>
-          ${already ? '이미 복구됨 ✔' : '내 하드에 복구 ▼'}
-        </button>
+        <div class="archive-console">
+          <section class="archive-story">
+            <div class="archive-audio">
+              <span class="archive-section-label">FIELD AUDIO</span>
+              <button class="tp-btn" data-act="play" title="재생/일시정지" aria-label="재생/일시정지">
+                <svg viewBox="0 0 12 12"><path d="M2 1l8 5-8 5z" fill="#000"/></svg>
+              </button>
+              <button class="tp-btn" data-act="stop" title="정지" aria-label="정지">
+                <svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" fill="#000"/></svg>
+              </button>
+              <div class="seek bevel-in"><div class="track"></div><div class="fill"></div></div>
+              <span class="tp-time pixel">00:00 / 00:00</span>
+            </div>
+            <div class="archive-caption">
+              <span class="archive-section-label">MEMORY NOTE</span>
+              <div class="vt-body" aria-live="polite"></div><span class="cursor blink">_</span>
+            </div>
+            <div class="archive-tags"><span>${Safe.html(mem.type || 'archive')}</span><span>${mem.sound ? 'PHOTO + AUDIO' : 'PHOTO'}</span><span>${Safe.html(mem.ext || 'FILE').toUpperCase()}</span></div>
+          </section>
+          <section class="archive-recovery">
+            <div class="archive-recovery-kicker">MEMORY RECOVERY</div>
+            <button class="archive-recover" data-act="recover" ${already ? 'disabled' : ''}>
+              ${already ? '복구 완료' : '복구하기'}
+            </button>
+            <div class="archive-progress-head"><span>복구 진행</span><b data-progress-pct>${already ? '100' : '0'}%</b></div>
+            <div class="archive-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${already ? '100' : '0'}"><i style="width:${already ? '100' : '0'}%"></i></div>
+            <div class="archive-progress-state" data-progress-state>${already ? 'RECOVERY COMPLETE' : 'IDLE / READY'}</div>
+          </section>
+        </div>
+        <div class="status-bar archive-status"><span class="status-cell">${Safe.html(mem.title)}.${Safe.html(mem.ext)}</span><span class="status-cell fixed">서울시립기억보관소</span></div>
       </div>`;
 
     const win = WM.open({
-      id, title: `${mem.title}.${mem.ext} — 기억 뷰어`, icon: ICON.photo,
-      width: 560, className: 'viewer', body,
+      id, title: `서울OS 98 - 시립기억보관소 · ${mem.title}.${mem.ext}`, icon: ICON.photo,
+      width: 1100, className: 'viewer archive-viewer', body, y: 70,
       onClose: () => { stopViewerAudio(); }
     });
 
-    // 문장 타이핑 효과
+    body.querySelector('[data-nav=recovered]').addEventListener('click', () => Apps.myHard('recovered'));
+    body.querySelector('[data-nav=corrupt]').addEventListener('click', () => Apps.myHard('corrupt'));
+
+    const photo = body.querySelector('.archive-photo img');
+    photo.addEventListener('error', () => {
+      photo.remove();
+      body.querySelector('.archive-photo').classList.add('missing');
+    });
+
+    // 문장은 짧은 복구 타이핑으로 드러난다.
     const vt = body.querySelector('.vt-body');
-    const full = (mem.text || '').split('\n');
-    let li = 0, ci = 0, cur = '';
-    const lines = [];
+    const full = String(mem.text || '기록 문장이 남아 있지 않습니다.');
+    let ci = 0;
     const typer = setInterval(() => {
-      if (li >= full.length) { clearInterval(typer); return; }
+      if (ci >= full.length) { clearInterval(typer); return; }
       if (!win.isConnected) { clearInterval(typer); return; }
-      const line = full[li];
-      if (ci <= line.length) {
-        lines[li] = line.slice(0, ci);
-        vt.innerHTML = lines.map(l => l === '' ? '<br>' : l).join('<br>');
-        ci++;
-      } else { li++; ci = 0; }
-    }, 34);
+      ci += 1;
+      vt.textContent = full.slice(0, ci);
+    }, 20);
 
     // 오디오
     const amb = document.getElementById('ambient');
@@ -200,7 +254,7 @@ const Apps = (() => {
       playBtn.addEventListener('click', () => {
         Sfx.unlock();
         if (viewerAudioId !== id || amb.paused) {
-          if (viewerAudioId !== id) { amb.src = mem.sound; amb.currentTime = 0; }
+          if (viewerAudioId !== id) { amb.src = Content.assetUrl(mem.sound); amb.currentTime = 0; }
           viewerAudioId = id;
           amb.play().then(() => setPlayIcon(true)).catch(() => {});
         } else { amb.pause(); setPlayIcon(false); }
@@ -219,8 +273,6 @@ const Apps = (() => {
         const r = seek.getBoundingClientRect();
         amb.currentTime = ((e.clientX - r.left) / r.width) * amb.duration;
       });
-      // 뷰어 열면 자동 재생 시도
-      setTimeout(() => playBtn.click(), 350);
     } else {
       playBtn.disabled = true; stopBtn.disabled = true;
       timeEl.textContent = '소리 없음';
@@ -230,15 +282,39 @@ const Apps = (() => {
     // 복구 버튼
     const recBtn = body.querySelector('[data-act=recover]');
     if (!already) recBtn.addEventListener('click', () => {
-      const ok = State.addRecovered(mem);
-      if (ok) {
-        Sfx.recover();
-        recBtn.disabled = true; recBtn.textContent = '복구 완료 ✔';
-        Desktop.renderSaved();
-        Toast.show('복구 완료', `${mem.title}.${mem.ext} 파일을 내 하드에 저장했습니다.`);
-        // 복구율 창 열려있으면 갱신
-        Apps.recoveryUpdate && Apps.recoveryUpdate();
-      }
+      const progress = body.querySelector('.archive-progress');
+      const progressFill = progress.querySelector('i');
+      const pctEl = body.querySelector('[data-progress-pct]');
+      const stateEl = body.querySelector('[data-progress-state]');
+      recBtn.disabled = true;
+      recBtn.textContent = '복구 중...';
+      stateEl.textContent = 'SCANNING MEMORY BLOCKS';
+      const started = performance.now();
+      const duration = 1900;
+      const animate = now => {
+        if (!win.isConnected) return;
+        const raw = Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - raw, 3);
+        const pct = Math.round(eased * 100);
+        progressFill.style.width = pct + '%';
+        progress.setAttribute('aria-valuenow', String(pct));
+        pctEl.textContent = pct + '%';
+        if (raw < 1) {
+          if (pct % 9 === 0) Sfx.hdd();
+          requestAnimationFrame(animate);
+          return;
+        }
+        const ok = State.addRecovered(mem);
+        recBtn.textContent = '복구 완료';
+        stateEl.textContent = 'RECOVERY COMPLETE';
+        if (ok) {
+          Sfx.recover();
+          Desktop.renderSaved();
+          Toast.show('복구 완료', `${mem.title}.${mem.ext} 파일을 내 하드에 저장했습니다.`);
+          Apps.recoveryUpdate && Apps.recoveryUpdate();
+        }
+      };
+      requestAnimationFrame(animate);
     });
   }
 
@@ -286,12 +362,16 @@ const Apps = (() => {
         } else {
           items.slice().reverse().forEach(it => {
             const f = document.createElement('div'); f.className = 'exp-file';
-            f.innerHTML = `${ICON.photo}<span class="fn">${it.title}.${it.ext}</span>`;
-            f.addEventListener('dblclick', () => {
+            f.innerHTML = `${ICON.photo}<span class="fn">${Safe.html(it.title)}.${Safe.html(it.ext)}</span>`;
+            const openMemory = () => {
               const mem = Content.db.memories.find(m => m.id === it.id);
               if (mem) Apps.viewer(mem); else Dialog.info('알림', '원본 데이터를 찾을 수 없습니다.');
+            };
+            f.addEventListener('dblclick', openMemory);
+            f.addEventListener('click', () => {
+              if (oneTap()) { openMemory(); return; }
+              list.querySelectorAll('.exp-file').forEach(x=>x.classList.remove('sel')); f.classList.add('sel'); Sfx.click();
             });
-            f.addEventListener('click', () => { list.querySelectorAll('.exp-file').forEach(x=>x.classList.remove('sel')); f.classList.add('sel'); Sfx.click(); });
             list.appendChild(f);
           });
         }
@@ -319,9 +399,12 @@ const Apps = (() => {
     list.innerHTML = '';
     items.forEach(it => {
       const f = document.createElement('div'); f.className = 'exp-file';
-      f.innerHTML = `${ICON.broken}<span class="fn neon">${it.title}.${it.ext}</span>`;
+      f.innerHTML = `${ICON.broken}<span class="fn neon">${Safe.html(it.title)}.${Safe.html(it.ext)}</span>`;
       f.addEventListener('dblclick', () => corruptRecover(it));
-      f.addEventListener('click', () => { list.querySelectorAll('.exp-file').forEach(x=>x.classList.remove('sel')); f.classList.add('sel'); Sfx.click(); });
+      f.addEventListener('click', () => {
+        if (oneTap()) { corruptRecover(it); return; }
+        list.querySelectorAll('.exp-file').forEach(x=>x.classList.remove('sel')); f.classList.add('sel'); Sfx.click();
+      });
       list.appendChild(f);
     });
     if (countEl) countEl.textContent = items.length + ' 개체 (손상)';
@@ -331,8 +414,8 @@ const Apps = (() => {
     Sfx.error();
     Dialog.custom({
       title: 'LOST + FOUND', icon: ICON.warn, width: 340,
-      html: `<p><b>${it.title}.${it.ext}</b></p>
-             <p class="pixel" style="background:#000;color:#0f6;padding:8px;margin-top:8px;white-space:pre-wrap;font-size:12px">${it.recoverText || '복구할 수 없는 조각입니다.'}</p>`,
+      html: `<p><b>${Safe.html(it.title)}.${Safe.html(it.ext)}</b></p>
+             <p class="pixel" style="background:#000;color:#0f6;padding:8px;margin-top:8px;white-space:pre-wrap;font-size:12px">${Safe.html(it.recoverText || '복구할 수 없는 조각입니다.')}</p>`,
       buttons: [{ label: '복구 시도', default: true, act: () => {
         State.addCorrupt(it.id);
         Toast.show('LOST+FOUND', '조각을 표시해두었습니다. 언젠가 복구될지도 모릅니다.');
@@ -356,7 +439,7 @@ const Apps = (() => {
           <div class="row"><span class="k">복구된 기억</span><span class="v" id="rec-done">${done} 개</span></div>
           <div class="row"><span class="k">남은 기억</span><span class="v" id="rec-left">${total-done} 개</span></div>
           <div class="row"><span class="k">발견한 손상 조각</span><span class="v bad">${State.corruptFound.length} 개</span></div>
-          <div class="row"><span class="k">복구자</span><span class="v">${State.name || '이름 없음'}</span></div>
+          <div class="row"><span class="k">복구자</span><span class="v">${Safe.html(State.name || '이름 없음')}</span></div>
         </div>
       </div>
       <div class="mail-actions" style="padding:10px">
@@ -399,8 +482,8 @@ const Apps = (() => {
         <canvas class="type-stars"></canvas>
         <div class="moon"></div>
         <div class="type-label">YOUR SEOUL TYPE</div>
-        <div class="type-name">「 ${t.name} 」</div>
-        <div class="type-desc">${t.desc}</div>
+        <div class="type-name">「 ${Safe.html(t.name)} 」</div>
+        <div class="type-desc">${Safe.html(t.desc)}</div>
         <div class="type-foot">복구한 기억 ${rec.length}개 기준 · SeoulOS 98</div>
       </div>
       <div class="mail-actions" style="padding:10px">
@@ -487,7 +570,7 @@ const Apps = (() => {
                 <b>내 하드에 복구한다</b>
                 <p>맘에 들면 아래 <span class="hp-chip hp-chip-cta">내 하드에 복구 ▼</span>
                 버튼을 누르세요. 이 기억은 <b>영원히</b> 당신의 컴퓨터에 저장됩니다.</p>
-                <p class="hp-warn">⚠ 복구하지 않은 기억은 <b>24시간 뒤 영원히 사라집니다.</b></p>
+                <p class="hp-warn">복구 전 기록은 보관소의 오늘 도착함 폴더에서 다시 확인할 수 있습니다.</p>
               </div>
             </li>
           </ol>`
@@ -558,19 +641,32 @@ const Apps = (() => {
         </section>
       </div>
       <div class="manual-actions">
-        ${auto ? `<label class="help-dont"><span class="w98-check"><input type="checkbox" id="help-dont"><span class="box"></span></span> 다음부터 열지 않기</label>` : '<span></span>'}
+        ${auto ? '<span class="manual-once">처음 한 번만 자동으로 표시됩니다.</span>' : '<span></span>'}
         <div class="ma-nav">
+          <button data-act="start">${auto ? '닫고 시작' : '닫기'}</button>
           <button data-act="prev" disabled>◀ 이전</button>
           <button class="default" data-act="next">다음 ▶</button>
         </div>
       </div>`;
 
-    const win = WM.open({ id: 'help', title: '사용 설명서 — 복구자 매뉴얼', icon: ICON.book, width: 560, className: 'manualwin', body });
+    let introFinished = false;
+    const finishIntro = () => {
+      if (!auto || introFinished) return;
+      introFinished = true;
+      State.introSeen = true;
+      State.helpSeen = true;
+      setTimeout(() => Apps.todaysFile(), 200);
+    };
+    const win = WM.open({
+      id: 'help', title: '사용 설명서 — 복구자 매뉴얼', icon: ICON.book,
+      width: 560, className: 'manualwin', body, onClose: finishIntro
+    });
 
     const tabsWrap = body.querySelector('.ms-tabs');
     const artEl = body.querySelector('#mm-art');
     const titleEl = body.querySelector('#mm-title');
     const contentEl = body.querySelector('#mm-content');
+    const startBtn = body.querySelector('[data-act=start]');
     const prevBtn = body.querySelector('[data-act=prev]');
     const nextBtn = body.querySelector('[data-act=next]');
 
@@ -601,14 +697,12 @@ const Apps = (() => {
       nextBtn.textContent = idx === pages.length - 1 ? '시작하기 ▶' : '다음 ▶';
     }
 
+    startBtn.addEventListener('click', () => { WM.close('help'); Sfx.click(); });
     prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; render(); Sfx.click(); } });
     nextBtn.addEventListener('click', () => {
       if (idx < pages.length - 1) { idx++; render(); Sfx.click(); }
       else {
-        const dont = body.querySelector('#help-dont');
-        if (dont && dont.checked) State.helpSeen = true;
         WM.close('help');
-        if (auto) setTimeout(() => Apps.todaysFile(), 200);
       }
     });
 
@@ -650,7 +744,7 @@ const Dialog = (() => {
     WM.open({ id, title: title || 'SeoulOS', icon: icon || ICON.info, width: width || 320, className: 'dialog', body, noMin: true, noMax: true });
     Sfx.ding();
   }
-  function info(title, msg) { custom({ title, icon: ICON.info, html: `<p>${msg}</p>`, buttons: [{ label: '확인', default: true }] }); }
+  function info(title, msg) { custom({ title, icon: ICON.info, html: `<p>${Safe.html(msg)}</p>`, buttons: [{ label: '확인', default: true }] }); }
   return { custom, info };
 })();
 

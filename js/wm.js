@@ -10,6 +10,15 @@ const WM = (() => {
   const wins = {};              // id -> {el, taskEl, title, minimized, prevRect}
   let active = null;
 
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   const closeSvg = `<svg width="8" height="7" viewBox="0 0 8 7"><path d="M0 0h2l2 2 2-2h2L5 3l3 3H6L4 4 2 6H0l3-3z" fill="#000"/></svg>`;
   const minSvg   = `<svg width="8" height="7" viewBox="0 0 8 7"><rect x="0" y="5" width="7" height="2" fill="#000"/></svg>`;
   const maxSvg   = `<svg width="9" height="8" viewBox="0 0 9 8"><rect x="0" y="0" width="9" height="8" fill="none" stroke="#000" stroke-width="1"/><rect x="0" y="0" width="9" height="2" fill="#000"/></svg>`;
@@ -80,6 +89,7 @@ const WM = (() => {
     win.className = 'window ' + (opts.className || '');
     win.dataset.id = id;
     if (opts.width) win.style.width = opts.width + 'px';
+    const safeTitle = escapeHtml(opts.title || 'SeoulOS');
 
     const ctrls = [];
     if (!opts.noMin) ctrls.push(`<button class="title-btn" data-act="min" title="최소화">${minSvg}</button>`);
@@ -89,7 +99,7 @@ const WM = (() => {
     win.innerHTML =
       `<div class="title-bar">
          ${opts.icon ? `<span class="title-icon">${opts.icon}</span>` : ''}
-         <span class="title-text">${opts.title || 'SeoulOS'}</span>
+         <span class="title-text">${safeTitle}</span>
          <span class="title-controls">${ctrls.join('')}</span>
        </div>`;
 
@@ -117,7 +127,7 @@ const WM = (() => {
     // 태스크바 항목
     const taskEl = document.createElement('button');
     taskEl.className = 'task-item bevel-out';
-    taskEl.innerHTML = `${opts.icon ? `<span style="width:15px;height:15px;display:inline-flex">${opts.icon}</span>` : ''}<span>${opts.title || 'SeoulOS'}</span>`;
+    taskEl.innerHTML = `${opts.icon ? `<span style="width:15px;height:15px;display:inline-flex">${opts.icon}</span>` : ''}<span>${safeTitle}</span>`;
     taskEl.addEventListener('click', () => {
       if (active === id && !wins[id].minimized) minimize(id);
       else { restore(id); focus(id); }

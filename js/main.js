@@ -5,13 +5,14 @@
 /* ── 데스크톱 ──────────────────────────────────────────────────────────── */
 const Desktop = (() => {
   const deskIcons = [
-    { id: 'help',  label: '사용 설명서', icon: ICON.book, run: () => Apps.help(false) },
     { id: 'today', label: '오늘의 파일', icon: ICON.mail, run: () => Apps.todaysFile() },
     { id: 'hard',  label: '내 하드 (C:)', icon: ICON.hdd, run: () => Apps.myHard('recovered') },
-    { id: 'recovery', label: '복구율', icon: ICON.gauge, run: () => Apps.recovery() },
     { id: 'lost',  label: 'LOST+FOUND', icon: ICON.trash, run: () => Apps.myHard('corrupt') },
-    { id: 'type',  label: '서울 성향', icon: ICON.star, run: () => Apps.yourType() }
+    { id: 'type',  label: '서울 성향', icon: ICON.star, run: () => Apps.yourType() },
+    { id: 'help',  label: '사용 설명서', icon: ICON.book, run: () => Apps.help(false) }
   ];
+
+  const oneTap = () => window.innerWidth <= 640 || window.matchMedia('(pointer: coarse)').matches;
 
   function bigDeskIcon(svg) {
     return svg.replace('width="16" height="16"', 'width="34" height="34"')
@@ -24,10 +25,15 @@ const Desktop = (() => {
     deskIcons.forEach(d => {
       const el = document.createElement('div');
       el.className = 'desk-icon';
-      el.innerHTML = `<span>${bigDeskIcon(d.icon)}</span><span class="label">${d.label}</span>`;
-      let clickTimer = null;
+      const icon = document.createElement('span');
+      icon.innerHTML = bigDeskIcon(d.icon);
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = d.label;
+      el.append(icon, label);
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (oneTap()) { d.run(); return; }
         wrap.querySelectorAll('.desk-icon').forEach(x => x.classList.remove('selected'));
         document.querySelectorAll('#desk-saved .desk-icon').forEach(x => x.classList.remove('selected'));
         el.classList.add('selected');
@@ -44,12 +50,24 @@ const Desktop = (() => {
     State.recovered.slice().reverse().forEach(it => {
       const el = document.createElement('div');
       el.className = 'desk-icon';
-      el.innerHTML = `<span>${bigDeskIcon(ICON.photo)}</span><span class="label">${it.title}.${it.ext}</span>`;
-      el.addEventListener('click', (e) => { e.stopPropagation(); el.classList.add('selected'); Sfx.click(); });
-      el.addEventListener('dblclick', () => {
+      const icon = document.createElement('span');
+      icon.innerHTML = bigDeskIcon(ICON.photo);
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = `${it.title}.${it.ext}`;
+      el.append(icon, label);
+      const openFile = () => {
         el.classList.remove('selected');
         const mem = Content.db.memories.find(m => m.id === it.id);
         if (mem) Apps.viewer(mem);
+      };
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (oneTap()) { openFile(); return; }
+        el.classList.add('selected'); Sfx.click();
+      });
+      el.addEventListener('dblclick', () => {
+        openFile();
       });
       wrap.appendChild(el);
     });
@@ -77,12 +95,157 @@ const Desktop = (() => {
     setInterval(draw, 120);
   }
 
+  function initCityMotion() {
+    const cv = document.getElementById('city-motion');
+    const skyline = document.getElementById('skyline');
+    if (!cv || !skyline || cv.dataset.ready === 'true') return;
+    cv.dataset.ready = 'true';
+    const ctx = cv.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const source = { width: 1920, height: 1080 };
+
+    // Coordinates below are traced from skyline.jpg, not generated at random.
+    const windowLights = [
+      [52, 655], [58, 673], [99, 680], [128, 679], [177, 672], [190, 694],
+      [371, 631], [384, 632], [399, 631], [420, 648], [445, 665], [462, 682],
+      [725, 632], [739, 632], [753, 632], [767, 649], [781, 666],
+      [852, 644], [869, 644], [886, 660], [903, 677],
+      [949, 657], [961, 674], [973, 691], [1108, 680], [1125, 680], [1142, 696],
+      [1217, 657], [1233, 674], [1250, 691], [1417, 647], [1432, 664], [1450, 681],
+      [1716, 615], [1732, 632], [1747, 649], [1794, 676], [1810, 693], [1864, 662]
+    ].map((point, index) => ({
+      x: point[0], y: point[1],
+      phase: (index * 1.73) % (Math.PI * 2),
+      period: 2600 + (index % 7) * 430
+    }));
+
+    const signs = [
+      { x: 570, y: 647, w: 109, h: 70, color: '#ff4fa7', phase: 0.2, period: 3400 },
+      { x: 772, y: 732, w: 100, h: 29, color: '#ff54c9', phase: 1.7, period: 2900 },
+      { x: 1178, y: 817, w: 101, h: 31, color: '#ff5ebd', phase: 3.1, period: 4100 }
+    ];
+
+    const roads = {
+      eastbound: [[-30, 876], [1945, 876]],
+      westbound: [[1945, 866], [-30, 866]],
+      leftRamp: [[365, 974], [586, 837]],
+      rightRamp: [[1622, 978], [1286, 820]]
+    };
+    const cars = Array.from({ length: 10 }, (_, index) => ({
+      road: index < 4 ? roads.eastbound : index < 7 ? roads.westbound : index < 9 ? roads.rightRamp : roads.leftRamp,
+      offset: (index * 0.137 + 0.08) % 1,
+      speed: index < 7 ? 0.000018 + (index % 3) * 0.000003 : 0.000014,
+      color: index % 3 === 0 ? '#ff445f' : '#ffe6a1'
+    }));
+    let width = 0;
+    let height = 0;
+    let frame = 0;
+    let imageMap = null;
+
+    function resize() {
+      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      width = cv.clientWidth;
+      height = cv.clientHeight;
+      cv.width = Math.round(width * dpr);
+      cv.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const box = skyline.getBoundingClientRect();
+      const canvasBox = cv.getBoundingClientRect();
+      const scale = Math.max(box.width / source.width, box.height / source.height);
+      imageMap = {
+        scale,
+        x: box.left - canvasBox.left + (box.width - source.width * scale) / 2,
+        y: box.top - canvasBox.top + box.height - source.height * scale
+      };
+    }
+
+    function point(x, y) {
+      return { x: imageMap.x + x * imageMap.scale, y: imageMap.y + y * imageMap.scale };
+    }
+
+    function pathPoint(path, progress) {
+      const start = point(path[0][0], path[0][1]);
+      const end = point(path[1][0], path[1][1]);
+      return {
+        x: start.x + (end.x - start.x) * progress,
+        y: start.y + (end.y - start.y) * progress,
+        angle: Math.atan2(end.y - start.y, end.x - start.x)
+      };
+    }
+
+    function draw(time) {
+      ctx.clearRect(0, 0, width, height);
+      if (!imageMap) return;
+      ctx.globalCompositeOperation = 'lighter';
+
+      windowLights.forEach(light => {
+        const pulse = (Math.sin((time / light.period) * Math.PI * 2 + light.phase) + 1) / 2;
+        if (pulse < 0.48) return;
+        const p = point(light.x, light.y);
+        const size = Math.max(1, 2.2 * imageMap.scale);
+        ctx.globalAlpha = 0.12 + pulse * 0.42;
+        ctx.fillStyle = '#ffd778';
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.max(1, size * 1.5), size);
+      });
+
+      signs.forEach(sign => {
+        const wave = (Math.sin((time / sign.period) * Math.PI * 2 + sign.phase) + 1) / 2;
+        const flicker = Math.sin(time * 0.043 + sign.phase * 11) > 0.94 ? 0.18 : 1;
+        const p = point(sign.x, sign.y);
+        ctx.save();
+        ctx.globalAlpha = (0.1 + wave * 0.2) * flicker;
+        ctx.strokeStyle = sign.color;
+        ctx.lineWidth = Math.max(1, imageMap.scale * 2);
+        ctx.shadowColor = sign.color;
+        ctx.shadowBlur = Math.max(3, imageMap.scale * 12);
+        ctx.strokeRect(p.x, p.y, sign.w * imageMap.scale, sign.h * imageMap.scale);
+        ctx.restore();
+      });
+
+      if (!reduced) {
+        cars.forEach(car => {
+          const progress = (time * car.speed + car.offset) % 1;
+          const p = pathPoint(car.road, progress);
+          const tail = Math.max(3, imageMap.scale * 13);
+          const head = Math.max(1.3, imageMap.scale * 3.2);
+          ctx.globalAlpha = 0.28;
+          ctx.strokeStyle = car.color;
+          ctx.lineWidth = Math.max(0.8, imageMap.scale);
+          ctx.beginPath();
+          ctx.moveTo(p.x - Math.cos(p.angle) * tail, p.y - Math.sin(p.angle) * tail);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+          ctx.globalAlpha = 0.88;
+          ctx.fillStyle = car.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, head, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      if (!reduced) frame = requestAnimationFrame(draw);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (reduced) return;
+      if (document.hidden) cancelAnimationFrame(frame);
+      else frame = requestAnimationFrame(draw);
+    });
+    window.addEventListener('resize', resize);
+    resize();
+    draw(0);
+  }
+
   function show() {
     document.getElementById('desktop').classList.remove('hidden');
     document.getElementById('taskbar').classList.remove('hidden');
     renderIcons();
     renderSaved();
     initStars();
+    initCityMotion();
     // 바탕화면 클릭 시 선택 해제 + 시작메뉴 닫기
     document.getElementById('desktop').addEventListener('click', () => {
       document.querySelectorAll('.desk-icon').forEach(x => x.classList.remove('selected'));
@@ -103,10 +266,6 @@ const StartMenu = (() => {
     { label: '복구율 보기', icon: ICON.gauge, run: () => Apps.recovery() },
     { label: 'LOST + FOUND', icon: ICON.trash, run: () => Apps.myHard('corrupt') },
     { label: '서울 성향 (YOUR TYPE)', icon: ICON.star, run: () => Apps.yourType() },
-    { sep: true },
-    { label: '현장 파일 (FIELD FILE)', icon: ICON.map, run: () => Apps.fieldFile() },
-    { label: 'HDD REPORT', icon: ICON.report, run: () => Apps.hddReport() },
-    { label: 'MEMORY MAP', icon: ICON.map, run: () => Apps.memoryMap() },
     { sep: true },
     { label: 'SeoulOS 98 정보', icon: ICON.info, run: () => Apps.about() },
     { label: '시스템 종료…', icon: ICON.disk, run: () => shutdown() }
@@ -195,6 +354,7 @@ const Tray = (() => {
 const Boot = (() => {
   const fast = () => !State.firstBoot;
   let done = false;
+  let naming = false;
 
   const logsFull = [
     { t: 'SEOUL MICRO SYSTEMS BIOS v9.8', c: 'dim' },
@@ -203,7 +363,7 @@ const Boot = (() => {
     { t: 'LOADING SEOUL.SYS', c: '' },
     { t: 'MOUNTING /기억 ................. OK', c: '' },
     { t: 'WARNING: 다수의 파일이 손상되었습니다.', c: 'warn' },
-    { t: 'WARNING: 일부 기억은 24시간 뒤 사라집니다.', c: 'warn' },
+    { t: 'NOTICE: 오늘의 기억 신호를 발견했습니다.', c: 'warn' },
     { t: '복구 시스템을 초기화합니다 ...', c: '' },
     { t: 'SEOUL MEMORY RECOVERY SYSTEM 준비 완료.', c: '' }
   ];
@@ -224,7 +384,7 @@ const Boot = (() => {
     document.addEventListener('keydown', keyskip, { once: true });
     boot.addEventListener('click', () => {}, { once: true });
 
-    const totalMs = fast() ? 1200 : 4200;
+    const totalMs = fast() ? 900 : 3000;
     const logs = fast() ? logsFull.slice(3) : logsFull;
     let pct = 0, li = 0;
     const startT = Date.now();
@@ -251,27 +411,31 @@ const Boot = (() => {
   }
 
   function finishToName() {
-    if (done) return;
-    // 이미 이름 입력 단계면 무시
-    if (!document.getElementById('boot-name-wrap').classList.contains('hidden')) return;
+    if (done || naming) return;
     document.getElementById('boot-fill').style.width = '100%';
     document.getElementById('boot-pct').textContent = '100%';
+    if (!State.firstBoot || State.name) { enter(); return; }
 
-    if (fast() && State.name) { enter(); return; }  // 재방문이고 이름 있으면 바로 진입
-
+    naming = true;
     const wrap = document.getElementById('boot-name-wrap');
-    wrap.classList.remove('hidden');
-    document.getElementById('boot-skip').classList.add('hidden');
     const input = document.getElementById('boot-name');
-    if (State.name) input.value = State.name;
+    document.getElementById('boot-skip').classList.add('hidden');
+    wrap.classList.remove('hidden');
     input.focus();
-    const go = () => { State.name = (input.value.trim() || '이름 없는 복구자'); enter(); };
-    document.getElementById('boot-enter').addEventListener('click', go);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+
+    const submit = useInput => {
+      if (done) return;
+      State.name = useInput && input.value.trim() ? input.value.trim() : '이름 없는 복구자';
+      enter();
+    };
+    document.getElementById('boot-enter').addEventListener('click', () => submit(true), { once: true });
+    document.getElementById('boot-name-skip').addEventListener('click', () => submit(false), { once: true });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(true); });
   }
 
   function enter() {
     if (done) return; done = true;
+    const firstVisit = State.firstBoot;
     State.firstBoot = false;
     Sfx.startup();
     const boot = document.getElementById('boot');
@@ -282,16 +446,13 @@ const Boot = (() => {
       Desktop.show();
       StartMenu.render();
       Tray.init();
-      // 첫 방문(또는 아직 설명서를 안 본 사용자)에게는 사용 설명서를 자동으로,
-      // 그 외에는 가벼운 환영 토스트만.
       setTimeout(() => {
-        if (!State.helpSeen) {
-          Apps.help(true);
-        } else {
-          Toast.show('다시 오셨군요, ' + (State.name || '복구자') + '님',
-            '바탕화면의 [오늘의 파일]을 더블클릭해 오늘의 기억을 복구하세요.');
+        if (!State.introSeen) Apps.help(true);
+        else {
+          Apps.todaysFile();
+          if (!firstVisit) Toast.show('보관소 연결 완료', '오늘의 기억 신호를 확인하세요.');
         }
-      }, 850);
+      }, 620);
     }, 500);
   }
 
