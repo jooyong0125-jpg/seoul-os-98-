@@ -1,40 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# SeoulOS 98 — Seoul Memory Recovery System
 
-## Getting Started
+> 빠르게 사라지는 서울을, 느린 컴퓨터 안에서 **발견하고 · 복구하고 · 나만의 하드에 저장한다.**
 
-First, run the development server:
+SeoulOS 98은 서울 관광 정보 사이트가 아닙니다.
+오래된 골목, 사라지는 간판, 밤의 시장 소리처럼 검색 결과에 잘 남지 않는
+**서울의 기억을 컴퓨터 파일처럼 발견하고 복구하는** 웹 경험입니다.
+사용자는 관광객이 아니라 **기억 복구자(Recoverer)** 입니다.
+
+Windows 98 감성의 느린 화면 안에서, 매일 도착하는 "오늘의 기억 파일"을 열어
+사진 · 소리 · 한 문장을 감상하고, [내 하드에 복구] 버튼으로 나만의 컴퓨터에 저장합니다.
+
+---
+
+## ⚠️ 콘텐츠 성역 규칙 (가장 중요)
+
+이 프로젝트의 **모든 콘텐츠(사진/소리/문장)는 코드와 완전히 분리**되어
+[`content/memories.json`](content/memories.json) 한 파일에 들어 있습니다.
+
+각 항목의 `author` 값이 규칙을 결정합니다.
+
+| author 값 | 의미 | 규칙 |
+|-----------|------|------|
+| `"sample"` | AI가 임시로 채워둔 예시 콘텐츠 | 자유롭게 교체·삭제 가능 |
+| `"user"`   | **사용자가 직접 넣은 콘텐츠** | ❗ **절대 수정·삭제·이동 금지 (성역)** |
+
+> 새 기억을 추가하려면 `content/memories.json`의 `memories` 배열에 항목을 추가하고
+> `"author": "user"` 로 표시하세요. 그러면 어떤 자동 작업에서도 보호됩니다.
+
+---
+
+## 실행 방법
+
+의존성 없는 **순수 HTML / CSS / JavaScript** 정적 사이트입니다. 빌드가 필요 없습니다.
 
 ```bash
+# 아무 정적 서버로나 실행 가능
+python3 -m http.server 3000
+# 또는
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 <http://localhost:3000> 접속.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+> ⚠️ `content/memories.json`을 `fetch`로 불러오므로 반드시 **서버로 실행**하세요.
+> (파일을 직접 `file://` 로 열면 CORS 정책 때문에 콘텐츠가 로드되지 않습니다.)
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+---
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## 처음 사용하기 (3단계)
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+접속하면 먼저 **⏻ 전원 버튼** 화면이 나옵니다.
+전원 버튼을 눌러야 컴퓨터가 켜지고 — 이때 **소리도 함께 활성화**됩니다.
+(브라우저는 사용자가 한 번 클릭해야 소리를 낼 수 있기 때문입니다. 헤드폰 권장 🎧)
 
-## Learn More
+1. **오늘의 파일 열기** — 바탕화면의 `[오늘의 파일]`을 더블클릭. 매일 기억 하나(사진·소리·문장)가 도착합니다.
+2. **감상하기** — 사진이 뜨고 소리가 재생되며 문장이 한 글자씩 타이핑됩니다. ▶ 버튼으로 소리 재생/정지.
+3. **내 하드에 복구** — `[내 하드에 복구 ▼]` 버튼으로 저장. **복구하지 않으면 24시간 뒤 사라집니다.**
 
-To learn more about Next.js, take a look at the following resources:
+> 처음 부팅하면 **사용 설명서 창**이 자동으로 뜹니다.
+> 언제든 바탕화면의 `[사용 설명서]` 아이콘이나 시작 메뉴에서 다시 볼 수 있습니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+### 소리가 안 들릴 때
+- 반드시 첫 화면의 **전원 버튼을 클릭**해서 시작했는지 확인하세요 (소리 활성화 조건).
+- 우측 하단 트레이의 🔊 **스피커 아이콘**이 꺼져(❌) 있지 않은지 확인하세요.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 구조 (1층 / 2층 / 3층)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+기획의 층 구조를 그대로 따릅니다. 처음 온 사용자는 30초 안에 이해할 수 있고, 깊이는 뒤에 숨어 있습니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+### 1층 — 첫 30초 (모든 신규 사용자) · **완전 구현**
+`전원 켜기 → 부팅 → 오늘의 기억 파일 → 사진·소리·문장 → [내 하드에 복구] → 복구율`
+
+- **00 전원 켜기** — ⏻ 전원 버튼 화면. 클릭하면 부팅 시작 + 소리 활성화.
+- **01 부팅 화면** — BIOS 로그 + 초록 픽셀 로딩바 + 크로마틱 로고 + CRT 켜짐 효과. 아무 키/클릭으로 스킵.
+- **사용 설명서** — 첫 부팅 시 자동으로 뜨는 3단계 가이드 창.
+- **데스크톱** — 서울 야경 스카이라인, 반짝이는 별, 바탕화면 아이콘, 시작 메뉴, 작업표시줄 시계.
+- **02 오늘의 기억 파일** — Win98 배달 대화상자. (날짜 기반으로 매일 파일이 바뀜)
+- **03 기억 뷰어** — 사진 + 재생 컨트롤(앰비언스 소리) + 타이핑되는 감성 문장.
+- **내 하드 저장** — `localStorage`에 복구 기록 저장, 바탕화면/탐색기에 파일이 쌓임.
+- **05 복구율** — 스캔디스크풍 파란 화면 게이지.
+
+### 2층 — 수집과 발견 · **구현**
+- **04 내 하드 (탐색기)** — 폴더 트리 + 복구한 파일 목록.
+- **06 LOST + FOUND** — 손상된 파일(휴지통) 조각.
+- **08 서울 성향 (YOUR TYPE)** — 복구한 기억 유형으로 결정되는 밤하늘 성향 카드.
+
+### 3층 — 도시와 연결 · **자리(준비 중 화면)**
+- **07 FIELD FILE** · **09 HDD REPORT** · **10 MEMORY MAP**
+  — 컨셉을 소개하는 "준비 중" 창으로 자리만 잡아둠. (다음 단계에서 확장)
+
+---
+
+## 파일 구조
+
+```
+index.html                 화면 골격 (부팅/데스크톱/창 컨테이너)
+css/
+  98.css                   Windows 98 디자인 시스템 (베벨·팔레트·버튼·창·스크롤바·CRT)
+  app.css                  화면/씬별 스타일 (부팅·뷰어·복구율·탐색기·성향)
+js/
+  audio.js                 Web Audio 기반 시스템/UI 사운드 합성 + 앰비언스 제어
+  wm.js                    윈도우 매니저 (드래그·포커스·최소/최대/닫기·태스크바)
+  apps.js                  상태(localStorage) · 콘텐츠 로더 · 각 앱 화면 · Dialog/Toast
+  main.js                  부팅 시퀀스 · 데스크톱 · 시작 메뉴 · 트레이(시계/소리/CRT)
+content/
+  memories.json            ★ 콘텐츠 데이터 (성역 규칙 적용) ★
+assets/
+  img/                     샘플 사진 + 스카이라인
+  audio/                   샘플 앰비언스 사운드
+```
+
+## 조작
+
+- 아이콘 **더블클릭**으로 열기 · 창 **타이틀바 드래그**로 이동 · 더블클릭으로 최대화
+- 우측 하단 트레이: 🔊 **소리 켜기/끄기** · 🖥 **CRT 화면효과 켜기/끄기**
+- 설정(소리/CRT/복구 기록/복구자 이름)은 브라우저에 자동 저장됩니다.
+
+---
+
+*(C) 1998 Seoul Micro Systems — a memory, not a map.*

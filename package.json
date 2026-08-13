@@ -1,16 +1,11 @@
 {
   "name": "seoul-os-98",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "SeoulOS 98 — Seoul Memory Recovery System. 빠르게 사라지는 서울을, 느린 컴퓨터 안에서 발견하고 복구하고 나만의 하드에 저장한다.",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "next": "16.3.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "dev": "python3 -m http.server 3000 --bind 0.0.0.0",
+    "start": "python3 -m http.server 3000 --bind 0.0.0.0"
   },
   "devDependencies": {
     "sharp": "^0.35.3"
