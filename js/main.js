@@ -364,7 +364,7 @@ const Tray = (() => {
 
 /* ── 부팅 시퀀스 ───────────────────────────────────────────────────────── */
 const Boot = (() => {
-  const ONBOARDING_VERSION = 3;
+  const ONBOARDING_VERSION = 4;
   const fast = () => !State.firstBoot;
   let done = false;
   let naming = false;
