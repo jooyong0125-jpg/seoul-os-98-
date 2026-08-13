@@ -4,10 +4,7 @@
   "private": true,
   "description": "SeoulOS 98 — Seoul Memory Recovery System. 빠르게 사라지는 서울을, 느린 컴퓨터 안에서 발견하고 복구하고 나만의 하드에 저장한다.",
   "scripts": {
-    "dev": "python3 -m http.server 3000 --bind 0.0.0.0",
-    "start": "python3 -m http.server 3000 --bind 0.0.0.0"
-  },
-  "devDependencies": {
-    "sharp": "^0.35.3"
+    "dev": "node server.js",
+    "start": "node server.js"
   }
 }

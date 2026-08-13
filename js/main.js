@@ -5,13 +5,14 @@
 /* ── 데스크톱 ──────────────────────────────────────────────────────────── */
 const Desktop = (() => {
   const deskIcons = [
-    { id: 'help',  label: '사용 설명서', icon: ICON.book, run: () => Apps.help(false) },
     { id: 'today', label: '오늘의 파일', icon: ICON.mail, run: () => Apps.todaysFile() },
     { id: 'hard',  label: '내 하드 (C:)', icon: ICON.hdd, run: () => Apps.myHard('recovered') },
-    { id: 'recovery', label: '복구율', icon: ICON.gauge, run: () => Apps.recovery() },
     { id: 'lost',  label: 'LOST+FOUND', icon: ICON.trash, run: () => Apps.myHard('corrupt') },
-    { id: 'type',  label: '서울 성향', icon: ICON.star, run: () => Apps.yourType() }
+    { id: 'type',  label: '서울 성향', icon: ICON.star, run: () => Apps.yourType() },
+    { id: 'help',  label: '사용 설명서', icon: ICON.book, run: () => Apps.help(false) }
   ];
+
+  const oneTap = () => window.innerWidth <= 640 || window.matchMedia('(pointer: coarse)').matches;
 
   function bigDeskIcon(svg) {
     return svg.replace('width="16" height="16"', 'width="34" height="34"')
@@ -24,10 +25,15 @@ const Desktop = (() => {
     deskIcons.forEach(d => {
       const el = document.createElement('div');
       el.className = 'desk-icon';
-      el.innerHTML = `<span>${bigDeskIcon(d.icon)}</span><span class="label">${d.label}</span>`;
-      let clickTimer = null;
+      const icon = document.createElement('span');
+      icon.innerHTML = bigDeskIcon(d.icon);
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = d.label;
+      el.append(icon, label);
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (oneTap()) { d.run(); return; }
         wrap.querySelectorAll('.desk-icon').forEach(x => x.classList.remove('selected'));
         document.querySelectorAll('#desk-saved .desk-icon').forEach(x => x.classList.remove('selected'));
         el.classList.add('selected');
@@ -44,12 +50,24 @@ const Desktop = (() => {
     State.recovered.slice().reverse().forEach(it => {
       const el = document.createElement('div');
       el.className = 'desk-icon';
-      el.innerHTML = `<span>${bigDeskIcon(ICON.photo)}</span><span class="label">${it.title}.${it.ext}</span>`;
-      el.addEventListener('click', (e) => { e.stopPropagation(); el.classList.add('selected'); Sfx.click(); });
-      el.addEventListener('dblclick', () => {
+      const icon = document.createElement('span');
+      icon.innerHTML = bigDeskIcon(ICON.photo);
+      const label = document.createElement('span');
+      label.className = 'label';
+      label.textContent = `${it.title}.${it.ext}`;
+      el.append(icon, label);
+      const openFile = () => {
         el.classList.remove('selected');
         const mem = Content.db.memories.find(m => m.id === it.id);
         if (mem) Apps.viewer(mem);
+      };
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (oneTap()) { openFile(); return; }
+        el.classList.add('selected'); Sfx.click();
+      });
+      el.addEventListener('dblclick', () => {
+        openFile();
       });
       wrap.appendChild(el);
     });
@@ -77,12 +95,95 @@ const Desktop = (() => {
     setInterval(draw, 120);
   }
 
+  function initCityMotion() {
+    const cv = document.getElementById('city-motion');
+    if (!cv || cv.dataset.ready === 'true') return;
+    cv.dataset.ready = 'true';
+    const ctx = cv.getContext('2d');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const windowLights = Array.from({ length: window.innerWidth <= 640 ? 34 : 110 }, (_, i) => ({
+      x: Math.random(),
+      y: 0.61 + Math.random() * 0.25,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.00018 + Math.random() * 0.00032,
+      size: i % 7 === 0 ? 2 : 1,
+      color: i % 11 === 0 ? '#33d6ff' : i % 5 === 0 ? '#ff7aa2' : '#ffd67a'
+    }));
+    const cars = Array.from({ length: 16 }, (_, i) => ({
+      lane: i % 2,
+      offset: Math.random(),
+      speed: 0.000025 + Math.random() * 0.000022,
+      direction: i % 3 === 0 ? -1 : 1,
+      color: i % 3 === 0 ? '#ff4d6d' : i % 5 === 0 ? '#33d6ff' : '#ffe19a'
+    }));
+    let width = 0;
+    let height = 0;
+    let frame = 0;
+
+    function resize() {
+      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      width = cv.clientWidth;
+      height = cv.clientHeight;
+      cv.width = Math.round(width * dpr);
+      cv.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function draw(time) {
+      ctx.clearRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'lighter';
+
+      windowLights.forEach(light => {
+        const pulse = (Math.sin(time * light.speed + light.phase) + 1) / 2;
+        if (pulse < 0.54) return;
+        ctx.globalAlpha = 0.2 + pulse * 0.56;
+        ctx.fillStyle = light.color;
+        ctx.fillRect(Math.round(light.x * width), Math.round(light.y * height), light.size + 1, light.size);
+      });
+
+      if (width > 700 && !reduced) {
+        cars.forEach(car => {
+          let progress = (time * car.speed + car.offset) % 1;
+          if (car.direction < 0) progress = 1 - progress;
+          const curve = Math.pow((progress - 0.5) * 2, 2);
+          const x = progress * width;
+          const y = height * (0.765 + car.lane * 0.035 + curve * 0.045);
+          const tail = 10 + curve * 16;
+          ctx.globalAlpha = 0.34;
+          ctx.strokeStyle = car.color;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x - tail * car.direction, y);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          ctx.globalAlpha = 0.92;
+          ctx.fillStyle = car.color;
+          ctx.fillRect(Math.round(x), Math.round(y - 1), 4, 2);
+        });
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      if (!reduced) frame = requestAnimationFrame(draw);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (reduced) return;
+      if (document.hidden) cancelAnimationFrame(frame);
+      else frame = requestAnimationFrame(draw);
+    });
+    window.addEventListener('resize', resize);
+    resize();
+    draw(0);
+  }
+
   function show() {
     document.getElementById('desktop').classList.remove('hidden');
     document.getElementById('taskbar').classList.remove('hidden');
     renderIcons();
     renderSaved();
     initStars();
+    initCityMotion();
     // 바탕화면 클릭 시 선택 해제 + 시작메뉴 닫기
     document.getElementById('desktop').addEventListener('click', () => {
       document.querySelectorAll('.desk-icon').forEach(x => x.classList.remove('selected'));
@@ -103,10 +204,6 @@ const StartMenu = (() => {
     { label: '복구율 보기', icon: ICON.gauge, run: () => Apps.recovery() },
     { label: 'LOST + FOUND', icon: ICON.trash, run: () => Apps.myHard('corrupt') },
     { label: '서울 성향 (YOUR TYPE)', icon: ICON.star, run: () => Apps.yourType() },
-    { sep: true },
-    { label: '현장 파일 (FIELD FILE)', icon: ICON.map, run: () => Apps.fieldFile() },
-    { label: 'HDD REPORT', icon: ICON.report, run: () => Apps.hddReport() },
-    { label: 'MEMORY MAP', icon: ICON.map, run: () => Apps.memoryMap() },
     { sep: true },
     { label: 'SeoulOS 98 정보', icon: ICON.info, run: () => Apps.about() },
     { label: '시스템 종료…', icon: ICON.disk, run: () => shutdown() }
@@ -195,6 +292,7 @@ const Tray = (() => {
 const Boot = (() => {
   const fast = () => !State.firstBoot;
   let done = false;
+  let naming = false;
 
   const logsFull = [
     { t: 'SEOUL MICRO SYSTEMS BIOS v9.8', c: 'dim' },
@@ -203,7 +301,7 @@ const Boot = (() => {
     { t: 'LOADING SEOUL.SYS', c: '' },
     { t: 'MOUNTING /기억 ................. OK', c: '' },
     { t: 'WARNING: 다수의 파일이 손상되었습니다.', c: 'warn' },
-    { t: 'WARNING: 일부 기억은 24시간 뒤 사라집니다.', c: 'warn' },
+    { t: 'NOTICE: 오늘의 기억 신호를 발견했습니다.', c: 'warn' },
     { t: '복구 시스템을 초기화합니다 ...', c: '' },
     { t: 'SEOUL MEMORY RECOVERY SYSTEM 준비 완료.', c: '' }
   ];
@@ -224,7 +322,7 @@ const Boot = (() => {
     document.addEventListener('keydown', keyskip, { once: true });
     boot.addEventListener('click', () => {}, { once: true });
 
-    const totalMs = fast() ? 1200 : 4200;
+    const totalMs = fast() ? 900 : 3000;
     const logs = fast() ? logsFull.slice(3) : logsFull;
     let pct = 0, li = 0;
     const startT = Date.now();
@@ -251,27 +349,31 @@ const Boot = (() => {
   }
 
   function finishToName() {
-    if (done) return;
-    // 이미 이름 입력 단계면 무시
-    if (!document.getElementById('boot-name-wrap').classList.contains('hidden')) return;
+    if (done || naming) return;
     document.getElementById('boot-fill').style.width = '100%';
     document.getElementById('boot-pct').textContent = '100%';
+    if (!State.firstBoot || State.name) { enter(); return; }
 
-    if (fast() && State.name) { enter(); return; }  // 재방문이고 이름 있으면 바로 진입
-
+    naming = true;
     const wrap = document.getElementById('boot-name-wrap');
-    wrap.classList.remove('hidden');
-    document.getElementById('boot-skip').classList.add('hidden');
     const input = document.getElementById('boot-name');
-    if (State.name) input.value = State.name;
+    document.getElementById('boot-skip').classList.add('hidden');
+    wrap.classList.remove('hidden');
     input.focus();
-    const go = () => { State.name = (input.value.trim() || '이름 없는 복구자'); enter(); };
-    document.getElementById('boot-enter').addEventListener('click', go);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+
+    const submit = useInput => {
+      if (done) return;
+      State.name = useInput && input.value.trim() ? input.value.trim() : '이름 없는 복구자';
+      enter();
+    };
+    document.getElementById('boot-enter').addEventListener('click', () => submit(true), { once: true });
+    document.getElementById('boot-name-skip').addEventListener('click', () => submit(false), { once: true });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(true); });
   }
 
   function enter() {
     if (done) return; done = true;
+    const firstVisit = State.firstBoot;
     State.firstBoot = false;
     Sfx.startup();
     const boot = document.getElementById('boot');
@@ -282,16 +384,13 @@ const Boot = (() => {
       Desktop.show();
       StartMenu.render();
       Tray.init();
-      // 첫 방문(또는 아직 설명서를 안 본 사용자)에게는 사용 설명서를 자동으로,
-      // 그 외에는 가벼운 환영 토스트만.
       setTimeout(() => {
-        if (!State.helpSeen) {
-          Apps.help(true);
-        } else {
-          Toast.show('다시 오셨군요, ' + (State.name || '복구자') + '님',
-            '바탕화면의 [오늘의 파일]을 더블클릭해 오늘의 기억을 복구하세요.');
+        if (!State.introSeen) Apps.help(true);
+        else {
+          Apps.todaysFile();
+          if (!firstVisit) Toast.show('보관소 연결 완료', '오늘의 기억 신호를 확인하세요.');
         }
-      }, 850);
+      }, 620);
     }, 500);
   }
 

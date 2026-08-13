@@ -22,7 +22,7 @@
       <button id="power-btn" class="power-btn" aria-label="전원 켜기">
         <svg viewBox="0 0 40 40" width="46" height="46"><circle cx="20" cy="20" r="15" fill="none" stroke="#0f6" stroke-width="3"/><rect x="18.5" y="6" width="3" height="14" rx="1.5" fill="#0f6"/></svg>
       </button>
-      <div class="power-hint">전원 버튼을 눌러 컴퓨터를 켜세요<br><span class="dim">(소리와 함께 부팅됩니다 · 헤드폰 권장)</span></div>
+      <div class="power-hint">전원 버튼을 눌러 오늘의 기억을 확인하세요<br><span class="dim">(소리와 함께 부팅됩니다 · 헤드폰 권장)</span></div>
     </div>
   </div>
 
@@ -42,9 +42,13 @@
     <div class="boot-log" id="boot-log"></div>
 
     <div class="boot-name hidden" id="boot-name-wrap">
-      <div>복구자 이름을 입력하세요 (선택):</div>
-      <input type="text" id="boot-name" maxlength="12" placeholder="이름 없는 복구자" autocomplete="off">
-      <button id="boot-enter" class="default">확인 ⏎</button>
+      <label for="boot-name">복구자 이름을 입력하세요</label>
+      <div class="boot-name-actions">
+        <input type="text" id="boot-name" maxlength="12" placeholder="이름 없는 복구자" autocomplete="off">
+        <button id="boot-enter" class="default">계속</button>
+        <button id="boot-name-skip">건너뛰기</button>
+      </div>
+      <div class="boot-name-note">이 이름은 복구 기록에만 표시됩니다.</div>
     </div>
 
     <div class="boot-skip" id="boot-skip">아무 키나 누르면 건너뜁니다 &raquo;</div>
@@ -54,6 +58,7 @@
   <div id="desktop" class="hidden">
     <canvas id="stars"></canvas>
     <img id="skyline" src="assets/img/skyline.jpg" alt="">
+    <canvas id="city-motion" aria-hidden="true"></canvas>
 
     <!-- 좌측 바탕화면 아이콘 -->
     <div class="desk-icons" id="desk-icons"></div>
@@ -97,7 +102,7 @@
 </div>
 
 <!-- 오디오 요소 (앰비언스) -->
-<audio id="ambient" loop preload="none"></audio>
+<audio id="ambient" preload="metadata"></audio>
 
 <script src="js/audio.js"></script>
 <script src="js/wm.js"></script>

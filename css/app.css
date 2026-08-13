@@ -66,10 +66,7 @@
 #desktop{
   position:absolute; inset:0 0 32px 0;
   overflow:hidden;
-  background:
-    radial-gradient(1200px 500px at 75% 118%, rgba(255,77,109,.22), transparent 60%),
-    radial-gradient(900px 500px at 15% 120%, rgba(51,214,255,.20), transparent 60%),
-    linear-gradient(180deg, #060916 0%, #0a0e27 45%, #131a3a 100%);
+  background:linear-gradient(180deg, #070914 0%, #101426 52%, #171b24 100%);
 }
 /* 서울 야경 실루엣(도트) */
 #skyline{ position:absolute; left:0; right:0; bottom:0; width:100%; height:46%;
@@ -79,9 +76,11 @@
           mask-image:linear-gradient(180deg, transparent 0%, #000 42%); }
 /* 별 */
 #stars{ position:absolute; inset:0; pointer-events:none; }
+#city-motion{ position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none;
+  image-rendering:auto; filter:drop-shadow(0 0 3px rgba(255,210,63,.22)); }
 
 /* 바탕화면 아이콘 */
-.desk-icons{ position:absolute; top:14px; left:14px; display:flex; flex-direction:column; gap:4px; }
+.desk-icons{ position:absolute; top:14px; left:14px; z-index:2; display:flex; flex-direction:column; gap:4px; }
 .desk-icon{
   width:78px; padding:6px 4px; text-align:center; cursor:default;
   display:flex; flex-direction:column; align-items:center; gap:4px;
@@ -97,7 +96,7 @@
 .desk-icon.selected img{ filter:brightness(.75) sepia(1) hue-rotate(190deg) saturate(4); }
 
 /* 저장된 파일이 바탕화면에 쌓임 */
-.desk-saved{ position:absolute; top:14px; right:14px; width:200px;
+.desk-saved{ position:absolute; top:14px; right:14px; z-index:2; width:200px;
   display:flex; flex-wrap:wrap; gap:2px; flex-direction:row-reverse; align-content:flex-start; }
 .desk-saved .desk-icon{ width:70px; }
 .desk-saved .desk-icon img{ width:30px; height:30px; }
@@ -161,6 +160,23 @@
 .mail-body .fname{ font-family:var(--w98-mono); }
 .mail-actions{ display:flex; gap:8px; justify-content:flex-end; padding:0 14px 14px; }
 
+/* 오늘의 파일: 화면 우측 하단에 도착하는 단일 행동 알림 */
+.signalwin{ width:330px; max-width:calc(100vw - 16px); }
+.signalwin .window-body{ margin:0; overflow:hidden; }
+.signal-body{ display:flex; gap:12px; padding:14px 14px 10px; background:#ededed; }
+.signal-body p{ margin:0 0 4px; font-size:12px; line-height:1.45; }
+.signal-led{ width:12px; height:12px; flex:0 0 auto; margin-top:5px; background:#00b36b;
+  border:1px solid #003820; box-shadow:0 0 0 2px #d7d7d7, 0 0 8px rgba(0,179,107,.8); animation:signalPulse 1.2s steps(2) infinite; }
+@keyframes signalPulse{ 50%{ background:#8cffbd; } }
+.signal-kicker{ color:#000080; font-family:var(--w98-mono); font-size:10px !important; }
+.signal-file{ font-family:var(--w98-mono); color:#202020; word-break:break-all; }
+.signal-note{ color:#666; font-size:11px !important; }
+.signal-saved{ color:#007047; font-weight:bold; font-size:11px !important; }
+.signal-actions{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px 10px;
+  border-top:1px solid #fff; box-shadow:inset 0 1px 0 #808080; }
+.signal-actions span{ color:#555; font-size:10px; font-family:var(--w98-mono); }
+.signal-actions button{ min-width:112px; }
+
 /* 미디어 뷰어 */
 .viewer{ width:560px; max-width:94vw; }
 .viewer .window-body{ display:flex; flex-direction:column; }
@@ -198,6 +214,76 @@
 .tp-time{ font-family:var(--w98-mono); font-size:12px; min-width:82px; text-align:center; }
 .vol{ display:flex; align-items:center; gap:4px; }
 .vol input[type=range]{ width:64px; }
+
+/* =========================================================================
+   시립기억보관소 — 사진 중심 아카이브 + 복구 진행 연출
+   ========================================================================= */
+.archive-viewer{ max-width:calc(100vw - 40px); }
+.archive-viewer .window-body{ height:min(780px, calc(100vh - 140px)); min-height:min(520px, calc(100vh - 140px)); margin:2px; overflow:hidden; }
+.archive-shell{ height:100%; min-height:0; display:flex; flex-direction:column; background:var(--w98-bg); }
+.archive-menu{ min-height:27px; align-items:center; border-bottom:1px solid var(--w98-lo); }
+.archive-meta{ flex:0 0 auto; display:grid; grid-template-columns:1.1fr .72fr 1fr 1.15fr; gap:1px; padding:5px;
+  background:#050505; color:#f1f1e8; border:1px solid #353535; }
+.archive-meta div{ min-width:0; padding:4px 8px; border-right:1px solid #343434; }
+.archive-meta div:last-child{ border-right:0; }
+.archive-meta span{ display:block; margin-bottom:2px; color:#8c938f; font-family:var(--w98-mono); font-size:9px; }
+.archive-meta b{ display:block; overflow:hidden; color:#e6ebe7; font-family:var(--w98-mono); font-size:11px; font-weight:400;
+  white-space:nowrap; text-overflow:ellipsis; }
+.archive-meta .archive-source{ color:#ffd23f; }
+
+.archive-work{ flex:1 1 auto; min-height:0; display:grid; grid-template-columns:190px minmax(0,1fr); gap:4px; padding:4px; }
+.archive-tree{ min-width:0; padding:6px 5px; overflow:auto; background:#f7f7f7; }
+.archive-tree-title{ display:flex; align-items:center; gap:6px; padding:4px 5px 8px; font-weight:bold; border-bottom:1px dotted #8a8a8a; }
+.archive-tree-title svg,.archive-node svg{ width:16px; height:16px; flex:0 0 auto; }
+.archive-node{ width:100%; min-width:0; margin-top:3px; padding:4px 5px; display:grid; grid-template-columns:18px minmax(0,1fr) auto;
+  gap:5px; align-items:center; text-align:left; background:transparent; border:0; box-shadow:none; }
+.archive-node:active{ padding:4px 5px; border:0; box-shadow:none; }
+.archive-node span{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.archive-node b{ min-width:18px; padding:0 3px; color:#555; background:#dedede; font-family:var(--w98-mono); font-size:9px; text-align:center; }
+.archive-node.selected,.archive-node:hover{ color:#fff; background:#000080; }
+.archive-node.selected b,.archive-node:hover b{ color:#000080; background:#fff; }
+.archive-tree-rule{ height:2px; margin:12px 4px; border-top:1px solid #808080; border-bottom:1px solid #fff; }
+.archive-tree-foot{ padding:3px 7px; color:#747474; font-family:var(--w98-mono); font-size:9px; line-height:1.6; }
+
+.archive-photo{ min-width:0; min-height:0; position:relative; overflow:hidden; background:#0b0b0b; border:2px solid;
+  border-color:#000 #fff #fff #000; }
+.archive-photo img{ display:block; width:100%; height:100%; object-fit:cover; object-position:center; image-rendering:auto; filter:saturate(.86) contrast(1.05); }
+.archive-photo.missing::after{ content:"이미지 파일을 찾을 수 없습니다"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#9aa0a0; font-family:var(--w98-mono); font-size:12px; }
+.archive-photo-label{ position:absolute; right:9px; top:9px; max-width:70%; padding:3px 7px; overflow:hidden;
+  background:rgba(0,0,0,.78); color:#fff; font-family:var(--w98-mono); font-size:10px; white-space:nowrap; text-overflow:ellipsis; }
+
+.archive-console{ flex:0 0 192px; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 250px;
+  background:#050505; color:#e7ebe8; border:2px solid; border-color:#111 #777 #777 #111; }
+.archive-story{ min-width:0; padding:9px 11px; display:flex; flex-direction:column; gap:7px; }
+.archive-section-label{ color:#8b948f; font-family:var(--w98-mono); font-size:9px; white-space:nowrap; }
+.archive-audio{ min-width:0; display:grid; grid-template-columns:86px 30px 30px minmax(80px,1fr) 86px; gap:6px; align-items:center; }
+.archive-audio .tp-btn{ width:28px; height:23px; min-width:28px; padding:2px; }
+.archive-audio .seek{ height:14px; position:relative; background:#d8d8d8; }
+.archive-audio .seek .track{ position:absolute; inset:5px 0; background:#383838; }
+.archive-audio .seek .fill{ position:absolute; left:0; top:5px; bottom:5px; width:0; background:#00b36b; }
+.archive-audio .tp-time{ color:#d5dad6; font-size:10px; }
+.archive-caption{ min-height:0; flex:1; padding-top:7px; overflow:auto; border-top:1px solid #2e2e2e; }
+.archive-caption .vt-body{ display:inline; color:#e5e9e6; font-family:var(--w98-mono); font-size:12px; line-height:1.65; white-space:pre-line; }
+.archive-caption .cursor{ margin-left:3px; color:#00d97e; }
+.archive-tags{ display:flex; flex-wrap:wrap; gap:5px; }
+.archive-tags span{ padding:2px 6px; color:#9ca29f; border:1px solid #343836; font-family:var(--w98-mono); font-size:8px; text-transform:uppercase; }
+
+.archive-recovery{ min-width:0; padding:14px; display:flex; flex-direction:column; justify-content:center; gap:10px;
+  border-left:1px solid #3b3b3b; background:#0d0d0d; }
+.archive-recovery-kicker{ color:#b4bbb6; font-family:var(--w98-mono); font-size:10px; }
+.archive-recover{ width:100%; min-height:46px; color:#171100; background:#ffd23f; border:2px solid;
+  border-color:#fff4a6 #705900 #705900 #fff4a6; box-shadow:inset 1px 1px 0 #fff1a2, inset -1px -1px 0 #b88e00;
+  font-family:var(--w98-title); font-size:17px; }
+.archive-recover:active{ padding:5px 9px 3px 11px; border-color:#705900 #fff4a6 #fff4a6 #705900; }
+.archive-recover:disabled{ color:#5a4b17; background:#c9a934; text-shadow:1px 1px #e5d06f; }
+.archive-progress-head{ display:flex; justify-content:space-between; color:#a8afaa; font-family:var(--w98-mono); font-size:10px; }
+.archive-progress-head b{ color:#ffd23f; font-weight:400; }
+.archive-progress{ height:18px; overflow:hidden; padding:2px; background:#030303; border:1px solid #626262; }
+.archive-progress i{ display:block; height:100%; width:0; background:repeating-linear-gradient(90deg,#00b36b 0 10px,#003f28 10px 13px);
+  transition:width .08s steps(2); }
+.archive-progress-state{ color:#6ec99b; font-family:var(--w98-mono); font-size:9px; text-align:right; }
+.archive-status{ margin:2px 0 0; }
 
 /* =========================================================================
    05. 복구율 시스템 (Scandisk 스타일)
@@ -298,8 +384,13 @@
 }
 
 /* 하드 로그인/개인화 미니 필드 (부팅 위) */
-.boot-name{ margin-top:6px; font-size:12px; color:#8fa0ff; }
-.boot-name input{ width:150px; }
+.boot-name{ width:340px; max-width:80vw; margin-top:-8px; padding:12px;
+  color:#c9d1ff; background:#070b18; border:1px solid #27325e; font-size:12px; }
+.boot-name label{ display:block; margin-bottom:8px; color:#fff; }
+.boot-name-actions{ display:flex; gap:6px; align-items:center; }
+.boot-name input{ min-width:0; width:160px; flex:1 1 auto; }
+.boot-name-actions button{ min-width:68px; }
+.boot-name-note{ margin-top:7px; color:#6978aa; font-size:10px; }
 
 /* =========================================================================
    전원 켜기 화면 (첫 제스처 = 오디오 언락)
@@ -403,6 +494,7 @@
 .manual-actions .ma-nav{ display:flex; gap:8px; }
 .manual-actions button{ min-width:82px; }
 .help-dont{ display:flex; align-items:center; gap:7px; font-size:11.5px; color:#222; cursor:pointer; }
+.manual-once{ color:#555; font-size:10px; }
 
 /* =========================================================================
    반응형
@@ -428,4 +520,23 @@
   .ms-foot{ display:none; }
   .mm-art{ height:70px; }
   .mm-content{ max-height:38vh; }
+  .boot-name-actions{ flex-wrap:wrap; }
+  .boot-name input{ flex-basis:100%; width:100%; }
+  #city-motion{ opacity:.76; }
+
+  .signalwin{ left:2vw !important; top:auto !important; bottom:42px; }
+  .archive-viewer .window-body{ height:calc(100vh - 84px); min-height:0; }
+  .archive-menu{ overflow-x:auto; }
+  .archive-meta{ grid-template-columns:1fr 1fr; }
+  .archive-meta div{ padding:3px 6px; }
+  .archive-work{ display:block; padding:3px; flex:0 0 34vh; }
+  .archive-tree{ display:none; }
+  .archive-photo{ width:100%; height:100%; min-height:180px; }
+  .archive-console{ flex:1 1 auto; grid-template-columns:1fr; overflow-y:auto; overflow-x:hidden; }
+  .archive-story{ min-height:0; flex:0 0 auto; }
+  .archive-caption{ min-height:150px; flex:0 0 auto; overflow:visible; }
+  .archive-audio{ grid-template-columns:30px 30px minmax(60px,1fr) 76px; }
+  .archive-audio .archive-section-label{ display:none; }
+  .archive-recovery{ min-height:158px; border-left:0; border-top:1px solid #3b3b3b; }
+  .archive-status{ display:none; }
 }
