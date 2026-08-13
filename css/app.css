@@ -69,11 +69,10 @@
   background:linear-gradient(180deg, #070914 0%, #101426 52%, #171b24 100%);
 }
 /* 서울 야경 실루엣(도트) */
-#skyline{ position:absolute; left:0; right:0; bottom:0; width:100%; height:46%;
-  object-fit:cover; object-position:center bottom;
+#skyline{ position:absolute; left:0; right:0; bottom:0; width:100%; height:auto;
   pointer-events:none; opacity:.92;
-  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 42%);
-          mask-image:linear-gradient(180deg, transparent 0%, #000 42%); }
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.18) 24%, #000 48%);
+          mask-image:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.18) 24%, #000 48%); }
 /* 별 */
 #stars{ position:absolute; inset:0; pointer-events:none; }
 #city-motion{ position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none;

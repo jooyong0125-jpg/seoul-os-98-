@@ -97,28 +97,50 @@ const Desktop = (() => {
 
   function initCityMotion() {
     const cv = document.getElementById('city-motion');
-    if (!cv || cv.dataset.ready === 'true') return;
+    const skyline = document.getElementById('skyline');
+    if (!cv || !skyline || cv.dataset.ready === 'true') return;
     cv.dataset.ready = 'true';
     const ctx = cv.getContext('2d');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const windowLights = Array.from({ length: window.innerWidth <= 640 ? 34 : 110 }, (_, i) => ({
-      x: Math.random(),
-      y: 0.61 + Math.random() * 0.25,
-      phase: Math.random() * Math.PI * 2,
-      speed: 0.00018 + Math.random() * 0.00032,
-      size: i % 7 === 0 ? 2 : 1,
-      color: i % 11 === 0 ? '#33d6ff' : i % 5 === 0 ? '#ff7aa2' : '#ffd67a'
+    const source = { width: 1920, height: 1080 };
+
+    // Coordinates below are traced from skyline.jpg, not generated at random.
+    const windowLights = [
+      [52, 655], [58, 673], [99, 680], [128, 679], [177, 672], [190, 694],
+      [371, 631], [384, 632], [399, 631], [420, 648], [445, 665], [462, 682],
+      [725, 632], [739, 632], [753, 632], [767, 649], [781, 666],
+      [852, 644], [869, 644], [886, 660], [903, 677],
+      [949, 657], [961, 674], [973, 691], [1108, 680], [1125, 680], [1142, 696],
+      [1217, 657], [1233, 674], [1250, 691], [1417, 647], [1432, 664], [1450, 681],
+      [1716, 615], [1732, 632], [1747, 649], [1794, 676], [1810, 693], [1864, 662]
+    ].map((point, index) => ({
+      x: point[0], y: point[1],
+      phase: (index * 1.73) % (Math.PI * 2),
+      period: 2600 + (index % 7) * 430
     }));
-    const cars = Array.from({ length: 16 }, (_, i) => ({
-      lane: i % 2,
-      offset: Math.random(),
-      speed: 0.000025 + Math.random() * 0.000022,
-      direction: i % 3 === 0 ? -1 : 1,
-      color: i % 3 === 0 ? '#ff4d6d' : i % 5 === 0 ? '#33d6ff' : '#ffe19a'
+
+    const signs = [
+      { x: 570, y: 647, w: 109, h: 70, color: '#ff4fa7', phase: 0.2, period: 3400 },
+      { x: 772, y: 732, w: 100, h: 29, color: '#ff54c9', phase: 1.7, period: 2900 },
+      { x: 1178, y: 817, w: 101, h: 31, color: '#ff5ebd', phase: 3.1, period: 4100 }
+    ];
+
+    const roads = {
+      eastbound: [[-30, 876], [1945, 876]],
+      westbound: [[1945, 866], [-30, 866]],
+      leftRamp: [[365, 974], [586, 837]],
+      rightRamp: [[1622, 978], [1286, 820]]
+    };
+    const cars = Array.from({ length: 10 }, (_, index) => ({
+      road: index < 4 ? roads.eastbound : index < 7 ? roads.westbound : index < 9 ? roads.rightRamp : roads.leftRamp,
+      offset: (index * 0.137 + 0.08) % 1,
+      speed: index < 7 ? 0.000018 + (index % 3) * 0.000003 : 0.000014,
+      color: index % 3 === 0 ? '#ff445f' : '#ffe6a1'
     }));
     let width = 0;
     let height = 0;
     let frame = 0;
+    let imageMap = null;
 
     function resize() {
       const dpr = Math.min(1.5, window.devicePixelRatio || 1);
@@ -127,38 +149,78 @@ const Desktop = (() => {
       cv.width = Math.round(width * dpr);
       cv.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const box = skyline.getBoundingClientRect();
+      const canvasBox = cv.getBoundingClientRect();
+      const scale = Math.max(box.width / source.width, box.height / source.height);
+      imageMap = {
+        scale,
+        x: box.left - canvasBox.left + (box.width - source.width * scale) / 2,
+        y: box.top - canvasBox.top + box.height - source.height * scale
+      };
+    }
+
+    function point(x, y) {
+      return { x: imageMap.x + x * imageMap.scale, y: imageMap.y + y * imageMap.scale };
+    }
+
+    function pathPoint(path, progress) {
+      const start = point(path[0][0], path[0][1]);
+      const end = point(path[1][0], path[1][1]);
+      return {
+        x: start.x + (end.x - start.x) * progress,
+        y: start.y + (end.y - start.y) * progress,
+        angle: Math.atan2(end.y - start.y, end.x - start.x)
+      };
     }
 
     function draw(time) {
       ctx.clearRect(0, 0, width, height);
+      if (!imageMap) return;
       ctx.globalCompositeOperation = 'lighter';
 
       windowLights.forEach(light => {
-        const pulse = (Math.sin(time * light.speed + light.phase) + 1) / 2;
-        if (pulse < 0.54) return;
-        ctx.globalAlpha = 0.2 + pulse * 0.56;
-        ctx.fillStyle = light.color;
-        ctx.fillRect(Math.round(light.x * width), Math.round(light.y * height), light.size + 1, light.size);
+        const pulse = (Math.sin((time / light.period) * Math.PI * 2 + light.phase) + 1) / 2;
+        if (pulse < 0.48) return;
+        const p = point(light.x, light.y);
+        const size = Math.max(1, 2.2 * imageMap.scale);
+        ctx.globalAlpha = 0.12 + pulse * 0.42;
+        ctx.fillStyle = '#ffd778';
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.max(1, size * 1.5), size);
       });
 
-      if (width > 700 && !reduced) {
+      signs.forEach(sign => {
+        const wave = (Math.sin((time / sign.period) * Math.PI * 2 + sign.phase) + 1) / 2;
+        const flicker = Math.sin(time * 0.043 + sign.phase * 11) > 0.94 ? 0.18 : 1;
+        const p = point(sign.x, sign.y);
+        ctx.save();
+        ctx.globalAlpha = (0.1 + wave * 0.2) * flicker;
+        ctx.strokeStyle = sign.color;
+        ctx.lineWidth = Math.max(1, imageMap.scale * 2);
+        ctx.shadowColor = sign.color;
+        ctx.shadowBlur = Math.max(3, imageMap.scale * 12);
+        ctx.strokeRect(p.x, p.y, sign.w * imageMap.scale, sign.h * imageMap.scale);
+        ctx.restore();
+      });
+
+      if (!reduced) {
         cars.forEach(car => {
-          let progress = (time * car.speed + car.offset) % 1;
-          if (car.direction < 0) progress = 1 - progress;
-          const curve = Math.pow((progress - 0.5) * 2, 2);
-          const x = progress * width;
-          const y = height * (0.765 + car.lane * 0.035 + curve * 0.045);
-          const tail = 10 + curve * 16;
-          ctx.globalAlpha = 0.34;
+          const progress = (time * car.speed + car.offset) % 1;
+          const p = pathPoint(car.road, progress);
+          const tail = Math.max(3, imageMap.scale * 13);
+          const head = Math.max(1.3, imageMap.scale * 3.2);
+          ctx.globalAlpha = 0.28;
           ctx.strokeStyle = car.color;
-          ctx.lineWidth = 1;
+          ctx.lineWidth = Math.max(0.8, imageMap.scale);
           ctx.beginPath();
-          ctx.moveTo(x - tail * car.direction, y);
-          ctx.lineTo(x, y);
+          ctx.moveTo(p.x - Math.cos(p.angle) * tail, p.y - Math.sin(p.angle) * tail);
+          ctx.lineTo(p.x, p.y);
           ctx.stroke();
-          ctx.globalAlpha = 0.92;
+          ctx.globalAlpha = 0.88;
           ctx.fillStyle = car.color;
-          ctx.fillRect(Math.round(x), Math.round(y - 1), 4, 2);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, head, 0, Math.PI * 2);
+          ctx.fill();
         });
       }
 
