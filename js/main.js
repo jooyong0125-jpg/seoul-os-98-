@@ -446,13 +446,22 @@ const Boot = (() => {
       Desktop.show();
       StartMenu.render();
       Tray.init();
-      setTimeout(() => {
+      const openFirstContent = () => {
         if (!State.introSeen) Apps.help(true);
         else {
           Apps.todaysFile();
           if (!firstVisit) Toast.show('보관소 연결 완료', '오늘의 기억 신호를 확인하세요.');
         }
-      }, 620);
+      };
+
+      if (firstVisit) {
+        const savedName = String(State.name || '').trim().replace(/\s*님$/, '');
+        const welcomeName = !savedName || savedName === '이름 없는 복구자' ? '복구자' : savedName;
+        Toast.show(`${welcomeName} 님, 환영합니다.`, '서울의 기억 보관소에 접속했습니다.', 2100);
+        setTimeout(openFirstContent, 2300);
+      } else {
+        setTimeout(openFirstContent, 620);
+      }
     }, 500);
   }
 
