@@ -258,8 +258,8 @@
   background:rgba(0,0,0,.78); color:#fff; font-family:var(--w98-mono); font-size:10px; white-space:nowrap; text-overflow:ellipsis; }
 
 .archive-console{ flex:0 0 192px; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 250px;
-  background:#050505; color:#e7ebe8; border:2px solid; border-color:#111 #777 #777 #111; }
-.archive-story{ min-width:0; padding:9px 11px; display:flex; flex-direction:column; gap:7px; }
+  overflow:hidden; background:#050505; color:#e7ebe8; border:2px solid; border-color:#111 #777 #777 #111; }
+.archive-story{ min-width:0; min-height:0; height:100%; padding:9px 11px; overflow:hidden; display:flex; flex-direction:column; gap:7px; }
 .archive-section-label{ color:#8b948f; font-family:var(--w98-mono); font-size:9px; white-space:nowrap; }
 .archive-audio{ min-width:0; display:grid; grid-template-columns:86px 30px 30px minmax(80px,1fr) 86px; gap:6px; align-items:center; }
 .archive-audio .tp-btn{ width:28px; height:23px; min-width:28px; padding:2px; }
@@ -273,7 +273,7 @@
 .archive-tags{ display:flex; flex-wrap:wrap; gap:5px; }
 .archive-tags span{ padding:2px 6px; color:#9ca29f; border:1px solid #343836; font-family:var(--w98-mono); font-size:8px; text-transform:uppercase; }
 
-.archive-recovery{ min-width:0; padding:14px; display:flex; flex-direction:column; justify-content:center; gap:10px;
+.archive-recovery{ min-width:0; min-height:0; height:100%; padding:14px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; gap:10px;
   border-left:1px solid #3b3b3b; background:#0d0d0d; }
 .archive-recovery-kicker{ color:#b4bbb6; font-family:var(--w98-mono); font-size:10px; }
 .archive-recover{ width:100%; min-height:46px; color:#171100; background:#ffd23f; border:2px solid;
