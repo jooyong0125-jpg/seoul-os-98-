@@ -40,8 +40,7 @@ const State = (() => {
   const KEY = 'seoulos98.save.v1';
   const def = {
     name: '', recovered: [], corruptFound: [], firstBoot: true,
-    crt: true, muted: false, helpSeen: false, introSeen: false,
-    profilePromptVersion: 0, welcomeVersion: 0, manualVersion: 0
+    crt: true, muted: false, helpSeen: false, introSeen: false
   };
   let s;
   try { s = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
@@ -72,12 +71,6 @@ const State = (() => {
     set helpSeen(v) { s.helpSeen = v; save(); },
     get introSeen() { return s.introSeen; },
     set introSeen(v) { s.introSeen = v; save(); },
-    get profilePromptVersion() { return Number(s.profilePromptVersion) || 0; },
-    set profilePromptVersion(v) { s.profilePromptVersion = Number(v) || 0; save(); },
-    get welcomeVersion() { return Number(s.welcomeVersion) || 0; },
-    set welcomeVersion(v) { s.welcomeVersion = Number(v) || 0; save(); },
-    get manualVersion() { return Number(s.manualVersion) || 0; },
-    set manualVersion(v) { s.manualVersion = Number(v) || 0; save(); },
     reset() { s = Object.assign({}, def); save(); }
   };
 })();
@@ -528,7 +521,7 @@ const Apps = (() => {
   function memoryMap() { stub('memmap', 'MEMORY MAP', ICON.map, '3층 · 기억 지도', '복구된 기억들이 서울 전역의 지도 위에 별처럼 이어집니다.\n곧 열립니다.'); }
 
   /* ── 사용 설명서 (복구자 매뉴얼 · 마법사 스타일) ── */
-  function help(auto = false, version = 0) {
+  function help(auto = false) {
     // 4개 챕터 데이터
     const pages = [
       {
@@ -648,7 +641,7 @@ const Apps = (() => {
         </section>
       </div>
       <div class="manual-actions">
-        ${auto ? '<span class="manual-once">처음 한 번만 자동으로 표시됩니다.</span>' : '<span></span>'}
+        ${auto ? '<span class="manual-once">부팅 후 기본 안내 화면입니다.</span>' : '<span></span>'}
         <div class="ma-nav">
           <button data-act="start">${auto ? '닫고 시작' : '닫기'}</button>
           <button data-act="prev" disabled>◀ 이전</button>
@@ -662,7 +655,6 @@ const Apps = (() => {
       introFinished = true;
       State.introSeen = true;
       State.helpSeen = true;
-      if (version) State.manualVersion = version;
       setTimeout(() => Apps.todaysFile(), 200);
     };
     const win = WM.open({
@@ -736,7 +728,7 @@ const Apps = (() => {
    ========================================================================= */
 const Dialog = (() => {
   let n = 0;
-  function custom({ title, icon, html, buttons, width }) {
+  function custom({ title, icon, html, buttons, width, onClose }) {
     const id = 'dlg_' + (++n);
     const body = document.createElement('div');
     body.className = 'window-body';
@@ -749,7 +741,7 @@ const Dialog = (() => {
       btn.addEventListener('click', () => { WM.close(id); if (b.act) b.act(); });
       act.appendChild(btn);
     });
-    WM.open({ id, title: title || 'SeoulOS', icon: icon || ICON.info, width: width || 320, className: 'dialog', body, noMin: true, noMax: true });
+    WM.open({ id, title: title || 'SeoulOS', icon: icon || ICON.info, width: width || 320, className: 'dialog', body, noMin: true, noMax: true, onClose });
     Sfx.ding();
   }
   function info(title, msg) { custom({ title, icon: ICON.info, html: `<p>${Safe.html(msg)}</p>`, buttons: [{ label: '확인', default: true }] }); }

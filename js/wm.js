@@ -19,6 +19,18 @@ const WM = (() => {
       .replace(/'/g, '&#039;');
   }
 
+  function fitToWorkspace(el) {
+    if (!el || el.classList.contains('maximized')) return;
+    const vw = layer().clientWidth;
+    const vh = layer().clientHeight;
+    const width = Math.min(el.offsetWidth, vw);
+    const height = Math.min(el.offsetHeight, vh);
+    const left = Math.max(0, Math.min(parseFloat(el.style.left) || 0, vw - width));
+    const top = Math.max(0, Math.min(parseFloat(el.style.top) || 0, vh - height));
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+
   const closeSvg = `<svg width="8" height="7" viewBox="0 0 8 7"><path d="M0 0h2l2 2 2-2h2L5 3l3 3H6L4 4 2 6H0l3-3z" fill="#000"/></svg>`;
   const minSvg   = `<svg width="8" height="7" viewBox="0 0 8 7"><rect x="0" y="5" width="7" height="2" fill="#000"/></svg>`;
   const maxSvg   = `<svg width="9" height="8" viewBox="0 0 9 8"><rect x="0" y="0" width="9" height="8" fill="none" stroke="#000" stroke-width="1"/><rect x="0" y="0" width="9" height="2" fill="#000"/></svg>`;
@@ -125,6 +137,7 @@ const WM = (() => {
     y = Math.max(0, Math.min(y, Math.max(0, vh - wh)));
     win.style.left = Math.round(x) + 'px';
     win.style.top = Math.round(y) + 'px';
+    fitToWorkspace(win);
 
     // 태스크바 항목
     const taskEl = document.createElement('button');
@@ -206,11 +219,14 @@ const WM = (() => {
 
   window.addEventListener('resize', () => {
     Object.values(wins).forEach(w => {
-      if (!w.el.classList.contains('maximized')) return;
-      w.el.style.left = '0px';
-      w.el.style.top = '0px';
-      w.el.style.width = '100%';
-      w.el.style.height = '100%';
+      if (w.el.classList.contains('maximized')) {
+        w.el.style.left = '0px';
+        w.el.style.top = '0px';
+        w.el.style.width = '100%';
+        w.el.style.height = '100%';
+      } else {
+        fitToWorkspace(w.el);
+      }
     });
   });
 
