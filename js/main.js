@@ -301,15 +301,27 @@ const StartMenu = (() => {
 
 /* ── 시스템 종료 ───────────────────────────────────────────────────────── */
 function shutdown() {
+  if (document.getElementById('shutdown')) return;
   Sfx.shutdown();
   const sd = document.createElement('div');
   sd.id = 'shutdown';
-  sd.innerHTML = `SeoulOS 98 을(를) 종료하는 중…<br><br><span class="dim" style="color:#6b7bbf">이제 컴퓨터를 안전하게 끌 수 있습니다.</span><br><br><button class="default" id="reboot">다시 부팅</button>`;
+  sd.setAttribute('role', 'status');
+  sd.setAttribute('aria-live', 'polite');
+  sd.innerHTML = `<div class="shutdown-panel">
+    <div class="shutdown-copy shutdown-working">SeoulOS 98 을(를) 종료하는 중…</div>
+    <div class="shutdown-copy shutdown-ready" hidden>
+      이제 컴퓨터를 안전하게 끌 수 있습니다.<br><br>
+      <button class="default" id="reboot">다시 부팅</button>
+    </div>
+  </div>`;
   document.getElementById('screen').appendChild(sd);
   setTimeout(() => sd.classList.add('crt-off'), 900);
   setTimeout(() => {
+    if (!sd.isConnected) return;
     sd.classList.remove('crt-off');
-    sd.style.animation = 'none';
+    sd.classList.add('ready');
+    sd.querySelector('.shutdown-working').hidden = true;
+    sd.querySelector('.shutdown-ready').hidden = false;
     const b = document.getElementById('reboot');
     if (b) b.addEventListener('click', () => location.reload());
   }, 1500);
@@ -352,6 +364,7 @@ const Tray = (() => {
 
 /* ── 부팅 시퀀스 ───────────────────────────────────────────────────────── */
 const Boot = (() => {
+  const ONBOARDING_VERSION = 3;
   const fast = () => !State.firstBoot;
   let done = false;
   let naming = false;
@@ -414,11 +427,13 @@ const Boot = (() => {
     if (done || naming) return;
     document.getElementById('boot-fill').style.width = '100%';
     document.getElementById('boot-pct').textContent = '100%';
-    if (!State.firstBoot || State.name) { enter(); return; }
+    if (State.profilePromptVersion >= ONBOARDING_VERSION) { enter(); return; }
 
     naming = true;
     const wrap = document.getElementById('boot-name-wrap');
     const input = document.getElementById('boot-name');
+    const savedName = String(State.name || '').trim();
+    input.value = savedName === '이름 없는 복구자' ? '' : savedName;
     document.getElementById('boot-skip').classList.add('hidden');
     wrap.classList.remove('hidden');
     input.focus();
@@ -426,6 +441,7 @@ const Boot = (() => {
     const submit = useInput => {
       if (done) return;
       State.name = useInput && input.value.trim() ? input.value.trim() : '이름 없는 복구자';
+      State.profilePromptVersion = ONBOARDING_VERSION;
       enter();
     };
     document.getElementById('boot-enter').addEventListener('click', () => submit(true), { once: true });
@@ -435,7 +451,8 @@ const Boot = (() => {
 
   function enter() {
     if (done) return; done = true;
-    const firstVisit = State.firstBoot;
+    const shouldWelcome = State.welcomeVersion < ONBOARDING_VERSION;
+    const shouldShowManual = State.manualVersion < ONBOARDING_VERSION;
     State.firstBoot = false;
     Sfx.startup();
     const boot = document.getElementById('boot');
@@ -447,16 +464,17 @@ const Boot = (() => {
       StartMenu.render();
       Tray.init();
       const openFirstContent = () => {
-        if (!State.introSeen) Apps.help(true);
+        if (shouldShowManual) Apps.help(true, ONBOARDING_VERSION);
         else {
           Apps.todaysFile();
-          if (!firstVisit) Toast.show('보관소 연결 완료', '오늘의 기억 신호를 확인하세요.');
+          if (!shouldWelcome) Toast.show('보관소 연결 완료', '오늘의 기억 신호를 확인하세요.');
         }
       };
 
-      if (firstVisit) {
+      if (shouldWelcome) {
         const savedName = String(State.name || '').trim().replace(/\s*님$/, '');
         const welcomeName = !savedName || savedName === '이름 없는 복구자' ? '복구자' : savedName;
+        State.welcomeVersion = ONBOARDING_VERSION;
         Toast.show(`${welcomeName} 님, 환영합니다.`, '서울의 기억 보관소에 접속했습니다.', 2100);
         setTimeout(openFirstContent, 2300);
       } else {

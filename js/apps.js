@@ -40,7 +40,8 @@ const State = (() => {
   const KEY = 'seoulos98.save.v1';
   const def = {
     name: '', recovered: [], corruptFound: [], firstBoot: true,
-    crt: true, muted: false, helpSeen: false, introSeen: false
+    crt: true, muted: false, helpSeen: false, introSeen: false,
+    profilePromptVersion: 0, welcomeVersion: 0, manualVersion: 0
   };
   let s;
   try { s = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
@@ -71,6 +72,12 @@ const State = (() => {
     set helpSeen(v) { s.helpSeen = v; save(); },
     get introSeen() { return s.introSeen; },
     set introSeen(v) { s.introSeen = v; save(); },
+    get profilePromptVersion() { return Number(s.profilePromptVersion) || 0; },
+    set profilePromptVersion(v) { s.profilePromptVersion = Number(v) || 0; save(); },
+    get welcomeVersion() { return Number(s.welcomeVersion) || 0; },
+    set welcomeVersion(v) { s.welcomeVersion = Number(v) || 0; save(); },
+    get manualVersion() { return Number(s.manualVersion) || 0; },
+    set manualVersion(v) { s.manualVersion = Number(v) || 0; save(); },
     reset() { s = Object.assign({}, def); save(); }
   };
 })();
@@ -521,7 +528,7 @@ const Apps = (() => {
   function memoryMap() { stub('memmap', 'MEMORY MAP', ICON.map, '3층 · 기억 지도', '복구된 기억들이 서울 전역의 지도 위에 별처럼 이어집니다.\n곧 열립니다.'); }
 
   /* ── 사용 설명서 (복구자 매뉴얼 · 마법사 스타일) ── */
-  function help(auto) {
+  function help(auto = false, version = 0) {
     // 4개 챕터 데이터
     const pages = [
       {
@@ -655,6 +662,7 @@ const Apps = (() => {
       introFinished = true;
       State.introSeen = true;
       State.helpSeen = true;
+      if (version) State.manualVersion = version;
       setTimeout(() => Apps.todaysFile(), 200);
     };
     const win = WM.open({
