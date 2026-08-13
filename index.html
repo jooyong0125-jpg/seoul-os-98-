@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#008080">
+<meta name="description" content="SeoulOS 98 — 빠르게 사라지는 서울을, 느린 컴퓨터 안에서 발견하고 복구하고 나만의 하드에 저장한다.">
+<title>SeoulOS 98 — Seoul Memory Recovery System</title>
+<link rel="stylesheet" href="css/98.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23000080'/><text x='8' y='12' font-size='11' fill='%23fff' text-anchor='middle'>S</text></svg>">
+</head>
+<body>
+
+<div id="screen">
+
+  <!-- ═══════════════ 00. 전원 켜기 (첫 제스처 = 소리 언락) ═══════════════ -->
+  <div id="power">
+    <div class="power-inner">
+      <div class="power-brand seoulos-logo">SeoulOS&nbsp;98</div>
+      <div class="power-sub">SEOUL MEMORY RECOVERY SYSTEM</div>
+      <button id="power-btn" class="power-btn" aria-label="전원 켜기">
+        <svg viewBox="0 0 40 40" width="46" height="46"><circle cx="20" cy="20" r="15" fill="none" stroke="#0f6" stroke-width="3"/><rect x="18.5" y="6" width="3" height="14" rx="1.5" fill="#0f6"/></svg>
+      </button>
+      <div class="power-hint">전원 버튼을 눌러 컴퓨터를 켜세요<br><span class="dim">(소리와 함께 부팅됩니다 · 헤드폰 권장)</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ 01. 부팅 화면 ═══════════════ -->
+  <div id="boot" class="hidden">
+    <div class="boot-logo">
+      <div class="brand seoulos-logo">SeoulOS&nbsp;98</div>
+      <div class="sub">SEOUL MEMORY RECOVERY SYSTEM</div>
+      <div class="boot-flag">▛ ▚ ▞ ▟&nbsp;&nbsp;COPYRIGHT (C) 1998 SEOUL MICRO SYSTEMS</div>
+    </div>
+
+    <div class="boot-loadwrap">
+      <div class="boot-loadlabel"><span id="boot-stage">MEMORY CHECK…</span><span id="boot-pct">0%</span></div>
+      <div class="boot-bar"><i id="boot-fill"></i></div>
+    </div>
+
+    <div class="boot-log" id="boot-log"></div>
+
+    <div class="boot-name hidden" id="boot-name-wrap">
+      <div>복구자 이름을 입력하세요 (선택):</div>
+      <input type="text" id="boot-name" maxlength="12" placeholder="이름 없는 복구자" autocomplete="off">
+      <button id="boot-enter" class="default">확인 ⏎</button>
+    </div>
+
+    <div class="boot-skip" id="boot-skip">아무 키나 누르면 건너뜁니다 &raquo;</div>
+  </div>
+
+  <!-- ═══════════════ 데스크톱 ═══════════════ -->
+  <div id="desktop" class="hidden">
+    <canvas id="stars"></canvas>
+    <img id="skyline" src="assets/img/skyline.jpg" alt="">
+
+    <!-- 좌측 바탕화면 아이콘 -->
+    <div class="desk-icons" id="desk-icons"></div>
+
+    <!-- 우측: 복구된 파일이 쌓이는 곳 -->
+    <div class="desk-saved" id="desk-saved"></div>
+  </div>
+
+  <!-- 창들이 여기에 렌더링됨 -->
+  <div id="windows"></div>
+
+  <!-- 알림 토스트 -->
+  <div id="toast" class="window">
+    <div class="t-head"><span id="toast-title">SeoulOS</span></div>
+    <div class="t-body" id="toast-body"></div>
+  </div>
+
+  <!-- ═══════════════ 시작 메뉴 ═══════════════ -->
+  <div id="start-menu" class="window hidden">
+    <div class="sm-side"><span class="seoulos-logo">Seoul<b>OS</b>98</span></div>
+    <div class="sm-list" id="start-list"></div>
+  </div>
+
+  <!-- ═══════════════ 태스크바 ═══════════════ -->
+  <div id="taskbar" class="hidden">
+    <button id="start-btn" class="bevel-out">
+      <img src="assets/img/skyline.jpg" alt="" style="width:18px;height:18px;object-fit:cover;border:1px solid #000">
+      <span>시작</span>
+    </button>
+    <div class="task-sep"></div>
+    <div id="task-windows"></div>
+    <div id="tray" class="bevel-thin-in">
+      <img id="tray-sound" title="소리 켜짐 / 끄기 (클릭)" alt="sound" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><path fill='%23000' d='M2 6h3l4-3v10L5 10H2z'/><path stroke='%23000' fill='none' d='M11 5c2 2 2 4 0 6'/></svg>">
+      <img id="tray-crt" title="CRT 화면효과 켜기 / 끄기" alt="crt" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect x='1' y='2' width='14' height='10' rx='1' fill='none' stroke='%23000'/><rect x='6' y='13' width='4' height='1' fill='%23000'/></svg>">
+      <span id="clock">--:--</span>
+    </div>
+  </div>
+
+  <!-- CRT 오버레이 -->
+  <div id="crt-overlay"></div>
+</div>
+
+<!-- 오디오 요소 (앰비언스) -->
+<audio id="ambient" loop preload="none"></audio>
+
+<script src="js/audio.js"></script>
+<script src="js/wm.js"></script>
+<script src="js/apps.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
