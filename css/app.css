@@ -2,7 +2,10 @@
    SeoulOS 98 — 애플리케이션 스타일 (화면/씬 단위)
    ========================================================================= */
 
-#screen{ position:fixed; inset:0; overflow:hidden; }
+#screen{ position:fixed; inset:0; width:100%; height:100dvh; overflow:hidden; }
+#windows{ position:absolute; inset:0 0 32px 0; overflow:hidden; pointer-events:none; }
+#windows > .window{ max-width:100%; max-height:100%; pointer-events:auto; }
+#windows > .window.maximized{ max-width:100%; max-height:100%; }
 
 /* =========================================================================
    01. 부팅 화면
@@ -217,8 +220,10 @@
 /* =========================================================================
    시립기억보관소 — 사진 중심 아카이브 + 복구 진행 연출
    ========================================================================= */
-.archive-viewer{ max-width:calc(100vw - 40px); }
-.archive-viewer .window-body{ height:min(780px, calc(100vh - 140px)); min-height:min(520px, calc(100vh - 140px)); margin:2px; overflow:hidden; }
+.archive-viewer{ max-width:100%; max-height:100%; }
+.archive-viewer .window-body{ height:min(780px, calc(100dvh - 170px)); min-height:0; margin:2px; overflow:hidden; }
+.archive-viewer.maximized{ max-width:none; max-height:none; }
+.archive-viewer.maximized .window-body{ height:auto; min-height:0; }
 .archive-shell{ height:100%; min-height:0; display:flex; flex-direction:column; background:var(--w98-bg); }
 .archive-menu{ min-height:27px; align-items:center; border-bottom:1px solid var(--w98-lo); }
 .archive-meta{ flex:0 0 auto; display:grid; grid-template-columns:1.1fr .72fr 1fr 1.15fr; gap:1px; padding:5px;
@@ -372,10 +377,14 @@
 /* =========================================================================
    셧다운 / 파워오프 화면
    ========================================================================= */
-#shutdown{ position:absolute; inset:0; z-index:9500; background:#000; color:#e6a23c;
+#shutdown{ position:absolute; inset:0; z-index:9500; overflow:hidden; background:#000; color:#e6a23c;
   font-family:var(--w98-mono); display:flex; align-items:center; justify-content:center;
   text-align:center; font-size:15px; line-height:1.8; }
-#shutdown.crt-off{ animation:crtPowerOff .5s ease-in both; }
+#shutdown .shutdown-panel{ width:min(460px, 86vw); }
+#shutdown.crt-off .shutdown-panel{ animation:crtPowerOff .5s ease-in both; }
+#shutdown.ready .shutdown-panel{ animation:shutdownReady .18s ease-out both; }
+#shutdown [hidden]{ display:none; }
+@keyframes shutdownReady{ from{ opacity:0; } to{ opacity:1; } }
 @keyframes crtPowerOff{
   0%{ transform:none; filter:none; opacity:1; }
   60%{ transform:scaleY(.02) scaleX(1.1); filter:brightness(3); }
@@ -524,7 +533,9 @@
   #city-motion{ opacity:.76; }
 
   .signalwin{ left:2vw !important; top:auto !important; bottom:42px; }
-  .archive-viewer .window-body{ height:calc(100vh - 84px); min-height:0; }
+  .window.maximized{ left:0 !important; right:auto; top:0 !important; width:100% !important; height:100% !important; }
+  .archive-viewer .window-body{ height:calc(100dvh - 120px); min-height:0; }
+  .archive-viewer.maximized .window-body{ height:auto; }
   .archive-menu{ overflow-x:auto; }
   .archive-meta{ grid-template-columns:1fr 1fr; }
   .archive-meta div{ padding:3px 6px; }

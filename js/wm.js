@@ -58,7 +58,7 @@ const WM = (() => {
       const p = e.touches ? e.touches[0] : e;
       let nx = ox + (p.clientX - sx);
       let ny = oy + (p.clientY - sy);
-      const maxX = window.innerWidth - 60, maxY = window.innerHeight - 60;
+      const maxX = layer().clientWidth - 60, maxY = layer().clientHeight - 24;
       nx = Math.max(-win.offsetWidth + 80, Math.min(nx, maxX));
       ny = Math.max(0, Math.min(ny, maxY));
       win.style.left = nx + 'px';
@@ -116,11 +116,13 @@ const WM = (() => {
     layer().appendChild(win);
 
     // 위치
-    const vw = window.innerWidth, vh = window.innerHeight;
+    const vw = layer().clientWidth, vh = layer().clientHeight;
     const ww = win.offsetWidth, wh = win.offsetHeight;
     let x = opts.x, y = opts.y;
     if (opts.center || x == null) x = Math.max(8, (vw - ww) / 2 + (seq % 5) * 16 - 32);
     if (opts.center || y == null) y = Math.max(8, (vh - wh) / 2 - 30 + (seq % 5) * 14 - 28);
+    x = Math.max(0, Math.min(x, Math.max(0, vw - ww)));
+    y = Math.max(0, Math.min(y, Math.max(0, vh - wh)));
     win.style.left = Math.round(x) + 'px';
     win.style.top = Math.round(y) + 'px';
 
@@ -198,9 +200,19 @@ const WM = (() => {
       w.prevRect = { left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height };
       el.classList.add('maximized');
       el.style.left = '0px'; el.style.top = '0px';
-      el.style.width = '100%'; el.style.height = 'calc(100% - 32px)';
+      el.style.width = '100%'; el.style.height = '100%';
     }
   }
+
+  window.addEventListener('resize', () => {
+    Object.values(wins).forEach(w => {
+      if (!w.el.classList.contains('maximized')) return;
+      w.el.style.left = '0px';
+      w.el.style.top = '0px';
+      w.el.style.width = '100%';
+      w.el.style.height = '100%';
+    });
+  });
 
   function exists(id) { return !!wins[id]; }
   function get(id) { return wins[id] && wins[id].el; }

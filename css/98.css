@@ -161,6 +161,7 @@ img,canvas{ image-rendering:pixelated; image-rendering:crisp-edges; }
 
 .title-btn{
   width:16px;height:14px;
+  min-width:16px; flex:0 0 16px; padding:0;
   background:var(--w98-bg);
   border:1px solid;
   border-color:var(--w98-hi2) var(--w98-lo2) var(--w98-lo2) var(--w98-hi2);
