@@ -9,6 +9,19 @@ const SERIES_SIZE = 8;
 
 function block(message) { blockers.push(message); }
 function isRemote(value) { return /^(https?:|data:|blob:)/i.test(String(value || '')); }
+function readJsonIfExists(filePath) {
+  return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf8')) : null;
+}
+function mergeFinalAudio() {
+  const payload = readJsonIfExists(path.join(root, 'content', 'audio-final.json'));
+  const map = payload?.audio || {};
+  for (const mem of memories) {
+    const entry = mem?.id ? map[mem.id] : null;
+    if (!entry?.sound || !entry?.meta) continue;
+    mem.sound = entry.sound;
+    mem.audio = { ...entry.meta };
+  }
+}
 function isApprovedRemoteImage(value) {
   try {
     const url = new URL(String(value || ''));
@@ -21,11 +34,28 @@ function isApprovedRemoteImage(value) {
     return false;
   }
 }
+function isApprovedRemoteAudio(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return url.protocol === 'https:' &&
+      url.hostname === 'bigsoundbank.com' &&
+      /^\/UPLOAD\/mp3\/\d+\.mp3$/i.test(url.pathname);
+  } catch {
+    return false;
+  }
+}
 function imageIsReleaseReady(value) {
   if (!value) return false;
   if (!isRemote(value)) return String(value).startsWith('assets/img/');
   return isApprovedRemoteImage(value);
 }
+function audioIsReleaseReady(value) {
+  if (!value) return false;
+  if (!isRemote(value)) return String(value).startsWith('assets/audio/');
+  return isApprovedRemoteAudio(value);
+}
+
+mergeFinalAudio();
 
 if (memories.length !== SERIES_SIZE) {
   block(`기억 파일 수가 ${memories.length}/${SERIES_SIZE}입니다.`);
@@ -64,18 +94,15 @@ for (const mem of memories) {
       block(`${label}: audio.status가 '${mem.audio.status}'입니다.`);
     }
     if (!mem.audio.origin) block(`${label}: audio.origin이 없습니다.`);
+    if (!mem.audio.license) block(`${label}: audio.license가 없습니다.`);
+    if (!mem.audio.pageUrl) block(`${label}: audio.pageUrl이 없습니다.`);
   }
 
   if (mem?.image && !imageIsReleaseReady(mem.image)) {
     block(`${label}: image는 로컬 assets/img 또는 승인된 공공 아카이브 원본이어야 합니다.`);
   }
-
-  // 음원은 실제 재생 자산이어야 한다. 원격 페이지 링크나 후보 메타데이터만으로는 통과시키지 않는다.
-  if (mem?.sound && isRemote(mem.sound)) {
-    block(`${label}: 최종 음원은 현재 로컬 assets/audio 파일로 패키징해야 합니다.`);
-  }
-  if (mem?.sound && !isRemote(mem.sound) && !String(mem.sound).startsWith('assets/audio/')) {
-    block(`${label}: sound가 assets/audio/ 아래에 있지 않습니다.`);
+  if (mem?.sound && !audioIsReleaseReady(mem.sound)) {
+    block(`${label}: sound는 로컬 assets/audio 또는 승인된 직접 CC0 MP3 자산이어야 합니다.`);
   }
 }
 
@@ -86,14 +113,14 @@ for (let order = 1; order <= SERIES_SIZE; order += 1) {
 const finalCount = memories.filter(mem => mem?.author === 'user').length;
 const soundCount = memories.filter(mem => Boolean(mem?.sound)).length;
 const imageReadyCount = memories.filter(mem => imageIsReleaseReady(mem?.image)).length;
-const localSoundCount = memories.filter(mem => mem?.sound && !isRemote(mem.sound) && String(mem.sound).startsWith('assets/audio/')).length;
+const audioReadyCount = memories.filter(mem => audioIsReleaseReady(mem?.sound)).length;
 
 console.log('\nSeoulOS 98 Release Readiness');
 console.log(`- memories: ${memories.length}/${SERIES_SIZE}`);
 console.log(`- finalized: ${finalCount}/${SERIES_SIZE}`);
 console.log(`- sound attached: ${soundCount}/${SERIES_SIZE}`);
-console.log(`- image ready (local or approved archive): ${imageReadyCount}/${SERIES_SIZE}`);
-console.log(`- packaged sounds: ${localSoundCount}/${SERIES_SIZE}`);
+console.log(`- image ready: ${imageReadyCount}/${SERIES_SIZE}`);
+console.log(`- audio ready: ${audioReadyCount}/${SERIES_SIZE}`);
 
 if (blockers.length) {
   console.error(`\nRELEASE GATE: FAIL (${blockers.length} blockers)`);
@@ -101,4 +128,4 @@ if (blockers.length) {
   process.exit(1);
 }
 
-console.log('\nRELEASE GATE: PASS — 8/8 memories are final with verified archival images and packaged audio.');
+console.log('\nRELEASE GATE: PASS — 8/8 memories are final with verified archival images and verified media audio.');
