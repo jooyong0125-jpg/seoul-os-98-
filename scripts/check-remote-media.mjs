@@ -19,9 +19,18 @@ function sleep(ms) {
 }
 
 for (const mem of memories) {
-  if (isRemote(mem?.image)) jobs.push({ id: mem.id, kind: 'image', url: mem.image });
+  if (isRemote(mem?.image)) {
+    jobs.push({
+      id: mem.id,
+      kind: 'image',
+      url: mem.image,
+      fallbackUrl: isRemote(mem?.source?.originalFileUrl) && mem.source.originalFileUrl !== mem.image
+        ? mem.source.originalFileUrl
+        : null
+    });
+  }
   const mappedSound = mem?.id && audioMap[mem.id]?.sound ? audioMap[mem.id].sound : mem?.sound;
-  if (isRemote(mappedSound)) jobs.push({ id: mem.id, kind: 'audio', url: mappedSound });
+  if (isRemote(mappedSound)) jobs.push({ id: mem.id, kind: 'audio', url: mappedSound, fallbackUrl: null });
 }
 
 function detect(bytes) {
@@ -94,20 +103,35 @@ async function fetchPrefix(url) {
   throw new Error('unreachable');
 }
 
+function isValidSignature(kind, detected) {
+  return kind === 'image' ? ['jpg', 'png'].includes(detected) : detected === 'mp3';
+}
+
+async function verifyUrl(job, url, label) {
+  const result = await fetchPrefix(url);
+  if (!isValidSignature(job.kind, result.detected)) {
+    throw new Error(`${label} signature mismatch (${result.detected})`);
+  }
+  console.log(`PASS ${job.kind.padEnd(5)} ${job.id}${label === 'fallback' ? ' [source fallback]' : ''} — HTTP ${result.status}, ${result.detected}, ${result.type || 'no content-type'}`);
+}
+
 async function check(job) {
   try {
-    const result = await fetchPrefix(job.url);
-    const valid = job.kind === 'image'
-      ? ['jpg', 'png'].includes(result.detected)
-      : result.detected === 'mp3';
-
-    if (!valid) {
-      errors.push(`${job.id}: ${job.kind} signature mismatch (${result.detected}) — ${job.url}`);
+    await verifyUrl(job, job.url, 'primary');
+    return;
+  } catch (primaryError) {
+    if (!job.fallbackUrl) {
+      errors.push(`${job.id}: ${job.kind} fetch failed — ${job.url} — ${primaryError.message}`);
       return;
     }
-    console.log(`PASS ${job.kind.padEnd(5)} ${job.id} — HTTP ${result.status}, ${result.detected}, ${result.type || 'no content-type'}`);
-  } catch (error) {
-    errors.push(`${job.id}: ${job.kind} fetch failed — ${job.url} — ${error.message}`);
+
+    console.log(`FALLBACK ${job.id} — primary unavailable (${primaryError.message}); checking source original.`);
+    try {
+      await sleep(800);
+      await verifyUrl(job, job.fallbackUrl, 'fallback');
+    } catch (fallbackError) {
+      errors.push(`${job.id}: ${job.kind} primary+fallback failed — ${primaryError.message}; ${fallbackError.message}`);
+    }
   }
 }
 
