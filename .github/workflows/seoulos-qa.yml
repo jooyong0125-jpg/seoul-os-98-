@@ -33,3 +33,7 @@ jobs:
 
       - name: Validate memory content and asset formats
         run: node scripts/validate-content.mjs
+
+      - name: Report final release readiness
+        continue-on-error: true
+        run: node scripts/release-readiness.mjs
