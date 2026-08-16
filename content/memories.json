@@ -171,6 +171,44 @@
       }
     },
     {
+      "id": "mem_apartment",
+      "seriesOrder": 7,
+      "theme": "오래된 아파트의 저녁",
+      "role": "생활",
+      "memoryEra": "1998",
+      "date": "1998-04-17",
+      "title": "WOOSUNG_APT_NIGHT_007",
+      "ext": "jpg",
+      "author": "sample",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/5/5e/20150213%EC%9A%B0%EC%84%B1%EC%95%84%ED%8C%8C%ED%8A%B8%EC%9E%85%EA%B5%AC298.jpg",
+      "sound": null,
+      "place": "우성아파트앞 사거리, 강남대로, 서울",
+      "type": "night",
+      "corrupt": false,
+      "text": "밤이 깊어지면\n아파트의 입구는 낮보다 조용해지고,\n집으로 돌아오는 사람들의 시간이\n불 켜진 창과 현관 앞에 겹쳐진다.\n\n오래된 집은 건물보다 먼저\n매일 반복된 귀가의 순간을 기억한다.",
+      "source": {
+        "capturedAt": "2015-02-13T22:22:10+09:00",
+        "place": "Gangnam-daero, Useong Apartment Crossroad, Seoul, South Korea",
+        "title": "20150213우성아파트입구298.jpg",
+        "creator": "최광모",
+        "url": "https://commons.wikimedia.org/wiki/File:20150213%EC%9A%B0%EC%84%B1%EC%95%84%ED%8C%8C%ED%8A%B8%EC%9E%85%EA%B5%AC298.jpg",
+        "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5e/20150213%EC%9A%B0%EC%84%B1%EC%95%84%ED%8C%8C%ED%8A%B8%EC%9E%85%EA%B5%AC298.jpg",
+        "license": "CC BY-SA 4.0",
+        "note": "Commons 메타데이터는 강남대로 우성아파트앞 사거리의 우성아파트 입구를 2015년 밤에 촬영한 사진으로 기록합니다. 인근 서초우성1차는 1979년 사용승인된 노후 단지였지만, 사진 메타데이터 자체가 특정 동·호나 단지 내부 생활을 증명하는 것은 아니므로 '오래된 아파트 일대의 저녁' 기록으로 사용합니다."
+      },
+      "audio": {
+        "status": "pending_asset",
+        "origin": "representative_ambience",
+        "candidateTitle": "Park in the City by night, no birds - Stereo Ambience",
+        "candidateCreator": "MiLeuthner",
+        "candidateUrl": "https://freesound.org/s/399033/",
+        "candidateLicense": "CC0",
+        "candidateDuration": "120.000s",
+        "candidateLocation": "Not Seoul / urban park surrounded by apartment houses",
+        "note": "늦은 저녁 아파트로 둘러싸인 작은 도시공원의 조용한 대표 환경음입니다. 실제 서울 또는 우성아파트 녹음으로 표기하면 안 됩니다."
+      }
+    },
+    {
       "id": "mem_disappearance",
       "seriesOrder": 8,
       "theme": "철거를 기다리는 동네",
