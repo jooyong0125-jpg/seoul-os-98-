@@ -96,16 +96,41 @@
     },
     {
       "id": "mem_hillside",
+      "seriesOrder": 4,
+      "theme": "언덕 위 오래된 동네",
+      "role": "집",
+      "memoryEra": "1997",
       "date": "1997-09-30",
-      "title": "달동네_불빛_00201",
+      "title": "OGIN_HILLSIDE_004",
       "ext": "jpg",
       "author": "sample",
-      "image": "assets/img/mem_hillside.jpg",
-      "sound": "assets/audio/amb_hillside.mp3",
-      "place": "언덕 위 동네",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Entrance_to_Seo_Yongtaek%27s_House_in_Ogin-dong.jpg/960px-Entrance_to_Seo_Yongtaek%27s_House_in_Ogin-dong.jpg",
+      "sound": null,
+      "place": "옥인동, 종로, 서울",
       "type": "hill",
       "corrupt": false,
-      "text": "해가 지면\n창문마다 불이 하나씩 켜졌다.\n\n좁은 계단을 오르던 발소리는\n이제 재개발 도면 위에만 남았다."
+      "text": "돌계단은 집의 높이만큼\n사람들의 하루를 위아래로 이어 왔다.\n담장과 처마 사이의 좁은 길에는\n걷는 사람의 속도가 그대로 남는다.\n\n언덕의 집은 도시를 내려다보기보다\n그 안에서 오래 버티고 있었다.",
+      "source": {
+        "capturedAt": "2019-12-28T16:52:52+09:00",
+        "place": "Ogin-dong, Jongno-gu, Seoul, South Korea",
+        "title": "Entrance to Seo Yongtaek's House in Ogin-dong.jpg",
+        "creator": "오모군",
+        "url": "https://commons.wikimedia.org/wiki/File:Entrance_to_Seo_Yongtaek%27s_House_in_Ogin-dong.jpg",
+        "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Entrance_to_Seo_Yongtaek%27s_House_in_Ogin-dong.jpg",
+        "license": "CC BY 3.0",
+        "note": "실제 옥인동 서용택 가옥의 돌계단과 입구. 원본 JPEG에는 EXIF 회전 정보가 있어 웹용으로는 Wikimedia 자동 회전 썸네일을 사용합니다."
+      },
+      "audio": {
+        "status": "pending_asset",
+        "origin": "representative_ambience",
+        "candidateTitle": "Dusk City Ambience.mp3",
+        "candidateCreator": "TheGloomWorker",
+        "candidateUrl": "https://freesound.org/people/TheGloomWorker/sounds/474625/",
+        "candidateLicense": "CC0",
+        "candidateDuration": "26.006s",
+        "candidateLocation": "Not Seoul / representative ambience only",
+        "note": "해질녘의 새·도시 원거리 소리·바람종이 섞인 대표 환경음. 실제 옥인동 녹음으로 표기하면 안 됩니다."
+      }
     }
   ],
 
