@@ -12,6 +12,12 @@ function isRemote(value) { return /^(https?:|data:|blob:)/i.test(String(value ||
 function readJsonIfExists(filePath) {
   return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf8')) : null;
 }
+function mergeSupplementalMemories() {
+  const payload = readJsonIfExists(path.join(root, 'content', 'supplemental-memories.json'));
+  for (const mem of Array.isArray(payload?.memories) ? payload.memories : []) {
+    if (mem?.id && !memories.some(existing => existing?.id === mem.id)) memories.push(mem);
+  }
+}
 function mergeFinalAudio() {
   const payload = readJsonIfExists(path.join(root, 'content', 'audio-final.json'));
   const map = payload?.audio || {};
@@ -25,11 +31,7 @@ function mergeFinalAudio() {
 function isApprovedRemoteImage(value) {
   try {
     const url = new URL(String(value || ''));
-    return [
-      'upload.wikimedia.org',
-      'commons.wikimedia.org',
-      'museum.seoul.go.kr'
-    ].includes(url.hostname);
+    return ['upload.wikimedia.org', 'commons.wikimedia.org', 'museum.seoul.go.kr'].includes(url.hostname);
   } catch {
     return false;
   }
@@ -37,9 +39,7 @@ function isApprovedRemoteImage(value) {
 function isApprovedRemoteAudio(value) {
   try {
     const url = new URL(String(value || ''));
-    return url.protocol === 'https:' &&
-      url.hostname === 'bigsoundbank.com' &&
-      /^\/UPLOAD\/mp3\/\d+\.mp3$/i.test(url.pathname);
+    return url.protocol === 'https:' && url.hostname === 'bigsoundbank.com' && /^\/UPLOAD\/mp3\/\d+\.mp3$/i.test(url.pathname);
   } catch {
     return false;
   }
@@ -55,11 +55,11 @@ function audioIsReleaseReady(value) {
   return isApprovedRemoteAudio(value);
 }
 
+mergeSupplementalMemories();
 mergeFinalAudio();
+memories.sort((a, b) => (a.seriesOrder || 999) - (b.seriesOrder || 999));
 
-if (memories.length !== SERIES_SIZE) {
-  block(`기억 파일 수가 ${memories.length}/${SERIES_SIZE}입니다.`);
-}
+if (memories.length !== SERIES_SIZE) block(`기억 파일 수가 ${memories.length}/${SERIES_SIZE}입니다.`);
 
 const orders = new Map();
 for (const mem of memories) {
@@ -90,20 +90,14 @@ for (const mem of memories) {
   if (!mem?.audio) {
     block(`${label}: audio provenance가 없습니다.`);
   } else {
-    if (mem.audio.status && mem.audio.status !== 'final') {
-      block(`${label}: audio.status가 '${mem.audio.status}'입니다.`);
-    }
+    if (mem.audio.status && mem.audio.status !== 'final') block(`${label}: audio.status가 '${mem.audio.status}'입니다.`);
     if (!mem.audio.origin) block(`${label}: audio.origin이 없습니다.`);
     if (!mem.audio.license) block(`${label}: audio.license가 없습니다.`);
     if (!mem.audio.pageUrl) block(`${label}: audio.pageUrl이 없습니다.`);
   }
 
-  if (mem?.image && !imageIsReleaseReady(mem.image)) {
-    block(`${label}: image는 로컬 assets/img 또는 승인된 공공 아카이브 원본이어야 합니다.`);
-  }
-  if (mem?.sound && !audioIsReleaseReady(mem.sound)) {
-    block(`${label}: sound는 로컬 assets/audio 또는 승인된 직접 CC0 MP3 자산이어야 합니다.`);
-  }
+  if (mem?.image && !imageIsReleaseReady(mem.image)) block(`${label}: image는 로컬 assets/img 또는 승인된 공공 아카이브 원본이어야 합니다.`);
+  if (mem?.sound && !audioIsReleaseReady(mem.sound)) block(`${label}: sound는 로컬 assets/audio 또는 승인된 직접 CC0 MP3 자산이어야 합니다.`);
 }
 
 for (let order = 1; order <= SERIES_SIZE; order += 1) {
