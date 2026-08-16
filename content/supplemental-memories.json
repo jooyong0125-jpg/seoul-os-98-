@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "note": "Supplemental memory slots merged by hardening/runtime and QA. This file exists while the final 8-memory dataset is being curated.",
+  "memories": [
+    {
+      "id": "mem_sewoon",
+      "seriesOrder": 5,
+      "theme": "세운상가 일대의 기계와 부품",
+      "role": "노동",
+      "memoryEra": "2000",
+      "date": "2000-05-18",
+      "title": "SEWOON_METALWORK_005",
+      "ext": "jpg",
+      "author": "sample",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/8/85/%EC%82%B4%EB%A6%BC%EB%8F%99_%EA%B8%88%EC%86%8D%EA%B3%B5%EA%B5%AC_%EA%B8%88%EC%86%8D%EC%A0%88%EB%8B%A8%EC%A0%901.jpg",
+      "sound": null,
+      "place": "세운상가 일대 · 을지로 금속가공 지구, 서울",
+      "type": "market",
+      "corrupt": false,
+      "text": "금속을 자르는 기계와 공구가\n작업장 안팎에 자리를 잡고 있다.\n도시는 완제품만으로 만들어지지 않는다.\n\n고치고 자르고 이어 붙이는 노동이\n이 일대의 시간을 오래 움직여 왔다.",
+      "source": {
+        "capturedAt": "2021-10-21T14:48:07+09:00",
+        "place": "Sallim-dong metalworks district, Euljiro, Seoul, South Korea",
+        "title": "살림동 금속공구 금속절단점1.jpg",
+        "creator": "Aaaatu / Aatu Dorochenko",
+        "url": "https://commons.wikimedia.org/wiki/File:%EC%82%B4%EB%A6%BC%EB%8F%99_%EA%B8%88%EC%86%8D%EA%B3%B5%EA%B5%AC_%EA%B8%88%EC%86%8D%EC%A0%88%EB%8B%A8%EC%A0%901.jpg",
+        "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/8/85/%EC%82%B4%EB%A6%BC%EB%8F%99_%EA%B8%88%EC%86%8D%EA%B3%B5%EA%B5%AC_%EA%B8%88%EC%86%8D%EC%A0%88%EB%8B%A8%EC%A0%901.jpg",
+        "license": "CC BY-SA 4.0",
+        "note": "실제 금속절단점 사진입니다. 세운상가 본동 내부 사진이라고 주장하지 않습니다. 서울역사아카이브는 세운상가 건물군 주변의 금속·전기전자·인쇄·제조업 밀집지역까지 넓은 세운상가 일대로 설명하고 있어, FILE 05는 '세운상가 일대의 기계와 부품'으로 범위를 정확히 표시합니다."
+      },
+      "audio": {
+        "status": "pending_audio_map",
+        "origin": "representative_ambience",
+        "note": "content/audio-final.json의 mem_sewoon 항목이 런타임과 QA에서 병합됩니다."
+      }
+    }
+  ]
+}
