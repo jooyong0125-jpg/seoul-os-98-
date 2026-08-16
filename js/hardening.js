@@ -1,6 +1,7 @@
 /* =========================================================================
    SeoulOS 98 — Final Project Hardening
    - '오늘의 파일'을 Asia/Seoul 달력 날짜 기준으로 고정
+   - 8개 seriesOrder 고정 슬롯으로 날짜→기억 매핑 안정화
    - 확정 콘텐츠 메타데이터 런타임 QA
    - 세계관 FILE DATE와 실제 SOURCE CAPTURED를 UI에서 구분
    - localhost에서 운영 자산을 몰래 참조하지 않도록 asset 경로 하드닝
@@ -10,6 +11,7 @@
   'use strict';
 
   const SEOUL_TZ = 'Asia/Seoul';
+  const SERIES_SIZE = 8;
   const ALLOWED_AUDIO_ORIGINS = new Set([
     'actual_location',
     'actual_seoul_representative',
@@ -60,13 +62,27 @@
       return String(path).replace(/^\/+/, '');
     };
 
-    // 기존 UTC 기반 Date.now()/86400000 로테이션을 서울의 '달력 날짜' 기준으로 교체한다.
+    // 날짜→기억 매핑은 배열 길이나 배열 순서가 아니라 1~8 고정 슬롯으로 계산한다.
+    // 이렇게 하면 새 기억을 추가하거나 JSON 배열을 재정렬해도 이미 존재하는 날짜의 목표 슬롯은 변하지 않는다.
     Content.todays = function todaysInSeoul() {
       const memories = Content.db.memories || [];
       if (!memories.length) return null;
+
       const dayNumber = dateKeyToDayNumber(seoulDateKey());
-      const index = ((dayNumber % memories.length) + memories.length) % memories.length;
-      return memories[index];
+      const targetOrder = ((dayNumber % SERIES_SIZE) + SERIES_SIZE) % SERIES_SIZE + 1;
+      const exact = memories.find(mem => mem && mem.seriesOrder === targetOrder);
+      if (exact) return exact;
+
+      // 제작 중 누락 슬롯이 있을 때만 임시 fallback. 8개가 완성되면 이 분기는 사용되지 않는다.
+      const ordered = memories
+        .filter(mem => mem && Number.isInteger(mem.seriesOrder))
+        .slice()
+        .sort((a, b) => a.seriesOrder - b.seriesOrder);
+      if (ordered.length) {
+        return ordered.find(mem => mem.seriesOrder > targetOrder) || ordered[0];
+      }
+
+      return memories[0];
     };
   }
 
@@ -96,8 +112,8 @@
       }
 
       if (mem.seriesOrder != null) {
-        if (!Number.isInteger(mem.seriesOrder) || mem.seriesOrder < 1 || mem.seriesOrder > 8) {
-          errors.push(`${label}: seriesOrder는 1~8 정수여야 합니다.`);
+        if (!Number.isInteger(mem.seriesOrder) || mem.seriesOrder < 1 || mem.seriesOrder > SERIES_SIZE) {
+          errors.push(`${label}: seriesOrder는 1~${SERIES_SIZE} 정수여야 합니다.`);
         } else if (orders.has(mem.seriesOrder)) {
           errors.push(`${label}: seriesOrder ${mem.seriesOrder}가 중복입니다.`);
         } else {
