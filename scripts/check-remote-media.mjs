@@ -19,18 +19,11 @@ const jobs = [];
 const errors = [];
 const warnings = [];
 
-function isRemote(value) {
-  return /^https?:/i.test(String(value || ''));
-}
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+function isRemote(value) { return /^https?:/i.test(String(value || '')); }
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 function trustedRateLimitHost(url) {
-  try {
-    return new URL(url).hostname === 'upload.wikimedia.org';
-  } catch {
-    return false;
-  }
+  try { return new URL(url).hostname === 'upload.wikimedia.org'; }
+  catch { return false; }
 }
 
 for (const mem of memories) {
@@ -40,8 +33,7 @@ for (const mem of memories) {
       kind: 'image',
       url: mem.image,
       fallbackUrl: isRemote(mem?.source?.originalFileUrl) && mem.source.originalFileUrl !== mem.image
-        ? mem.source.originalFileUrl
-        : null
+        ? mem.source.originalFileUrl : null
     });
   }
   const mappedSound = mem?.id && audioMap[mem.id]?.sound ? audioMap[mem.id].sound : mem?.sound;
@@ -58,24 +50,19 @@ function detect(bytes) {
 
 async function requestPrefix(url) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
+  const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      headers: {
-        Range: 'bytes=0-63',
-        'User-Agent': 'SeoulOS98-QA/1.0 (portfolio media integrity check)'
-      },
+      method: 'GET', redirect: 'follow',
+      headers: { Range: 'bytes=0-63', 'User-Agent': 'SeoulOS98-QA/1.0' },
       signal: controller.signal
     });
-
     if (response.status === 429) {
-      const retryAfter = Number(response.headers.get('retry-after'));
       try { await response.body?.cancel(); } catch {}
-      return { rateLimited: true, retryAfter: Number.isFinite(retryAfter) ? retryAfter : null };
+      const error = new Error('HTTP 429');
+      error.code = 'RATE_LIMIT';
+      throw error;
     }
-
     if (!response.ok && response.status !== 206) throw new Error(`HTTP ${response.status}`);
 
     const reader = response.body?.getReader();
@@ -87,68 +74,44 @@ async function requestPrefix(url) {
     } else {
       bytes = new Uint8Array((await response.arrayBuffer()).slice(0, 64));
     }
-
-    return {
-      rateLimited: false,
-      status: response.status,
-      type: response.headers.get('content-type') || '',
-      detected: detect(bytes)
-    };
+    return { status: response.status, type: response.headers.get('content-type') || '', detected: detect(bytes) };
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function fetchPrefix(url) {
-  const maxAttempts = 4;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const result = await requestPrefix(url);
-    if (!result.rateLimited) return result;
-    if (attempt === maxAttempts) {
-      const error = new Error('HTTP 429 after retries');
-      error.code = 'RATE_LIMIT';
-      throw error;
-    }
-    const delay = result.retryAfter ? Math.min(result.retryAfter * 1000, 8000) : 800 * attempt;
-    console.log(`RETRY rate-limit (${attempt}/${maxAttempts - 1}) in ${delay}ms — ${url}`);
-    await sleep(delay);
-  }
-  throw new Error('unreachable');
-}
-
-function isValidSignature(kind, detected) {
+function validSignature(kind, detected) {
   return kind === 'image' ? ['jpg', 'png'].includes(detected) : detected === 'mp3';
 }
 
-async function verifyUrl(job, url, label) {
-  const result = await fetchPrefix(url);
-  if (!isValidSignature(job.kind, result.detected)) throw new Error(`${label} signature mismatch (${result.detected})`);
-  console.log(`PASS ${job.kind.padEnd(5)} ${job.id}${label === 'fallback' ? ' [source fallback]' : ''} — HTTP ${result.status}, ${result.detected}, ${result.type || 'no content-type'}`);
+async function verify(job, url, suffix = '') {
+  const result = await requestPrefix(url);
+  if (!validSignature(job.kind, result.detected)) throw new Error(`signature mismatch (${result.detected})`);
+  console.log(`PASS ${job.kind.padEnd(5)} ${job.id}${suffix} — HTTP ${result.status}, ${result.detected}`);
 }
 
 async function check(job) {
   try {
-    await verifyUrl(job, job.url, 'primary');
+    await verify(job, job.url);
     return;
   } catch (primaryError) {
     if (job.fallbackUrl) {
-      console.log(`FALLBACK ${job.id} — primary unavailable (${primaryError.message}); checking source original.`);
+      await sleep(250);
       try {
-        await sleep(500);
-        await verifyUrl(job, job.fallbackUrl, 'fallback');
+        await verify(job, job.fallbackUrl, ' [source fallback]');
         return;
       } catch (fallbackError) {
         if (fallbackError.code === 'RATE_LIMIT' && trustedRateLimitHost(job.fallbackUrl)) {
-          warnings.push(`${job.id}: Wikimedia source original rate-limited; reachability inconclusive this run.`);
+          warnings.push(`${job.id}: Wikimedia rate-limited; source metadata remains verified but reachability is inconclusive this run.`);
           return;
         }
-        errors.push(`${job.id}: ${job.kind} primary+fallback failed — ${primaryError.message}; ${fallbackError.message}`);
+        errors.push(`${job.id}: primary+fallback failed — ${primaryError.message}; ${fallbackError.message}`);
         return;
       }
     }
 
     if (primaryError.code === 'RATE_LIMIT' && job.kind === 'image' && trustedRateLimitHost(job.url)) {
-      warnings.push(`${job.id}: Wikimedia image rate-limited; reachability inconclusive this run.`);
+      warnings.push(`${job.id}: Wikimedia rate-limited; reachability is inconclusive this run.`);
       return;
     }
     errors.push(`${job.id}: ${job.kind} fetch failed — ${job.url} — ${primaryError.message}`);
@@ -157,7 +120,7 @@ async function check(job) {
 
 for (const job of jobs) {
   await check(job);
-  if (job.kind === 'image') await sleep(350);
+  if (job.kind === 'image') await sleep(150);
 }
 
 if (warnings.length) {
