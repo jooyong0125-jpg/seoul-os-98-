@@ -3,6 +3,8 @@
    - '오늘의 파일'을 Asia/Seoul 달력 날짜 기준으로 고정
    - 확정 콘텐츠 메타데이터 런타임 QA
    - 세계관 FILE DATE와 실제 SOURCE CAPTURED를 UI에서 구분
+   - localhost에서 운영 자산을 몰래 참조하지 않도록 asset 경로 하드닝
+   - localStorage 사용 불가를 사전에 감지하고 사용자에게 경고
    ========================================================================= */
 (() => {
   'use strict';
@@ -35,8 +37,30 @@
     return match ? match[0] : String(value || 'UNKNOWN');
   }
 
-  // 기존 UTC 기반 Date.now()/86400000 로테이션을 서울의 '달력 날짜' 기준으로 교체한다.
+  function persistentStorageAvailable() {
+    const probe = 'seoulos98.storage.probe';
+    try {
+      window.localStorage.setItem(probe, '1');
+      window.localStorage.removeItem(probe);
+      return true;
+    } catch (error) {
+      console.error('[SeoulOS Storage] localStorage is unavailable. Recovery state will be session-only.', error);
+      return false;
+    }
+  }
+
+  const storagePersistent = persistentStorageAvailable();
+  window.SeoulOSStorage = { persistent: storagePersistent };
+
   if (typeof Content !== 'undefined') {
+    // 로컬 개발에서 없는 자산을 운영 Vercel에서 대신 가져오면 QA가 거짓 PASS가 된다.
+    // 원격 URL은 그대로 두고, 프로젝트 내부 경로는 현재 origin 기준으로만 해석한다.
+    Content.assetUrl = function hardenedAssetUrl(path) {
+      if (!path || /^(https?:|data:|blob:)/i.test(path)) return path || '';
+      return String(path).replace(/^\/+/, '');
+    };
+
+    // 기존 UTC 기반 Date.now()/86400000 로테이션을 서울의 '달력 날짜' 기준으로 교체한다.
     Content.todays = function todaysInSeoul() {
       const memories = Content.db.memories || [];
       if (!memories.length) return null;
@@ -108,6 +132,7 @@
       checkedAt: new Date().toISOString(),
       seoulDate: seoulDateKey(),
       memoryCount: memories.length,
+      storagePersistent,
       errors,
       warnings,
       pass: errors.length === 0
@@ -179,7 +204,21 @@
     enhanceTodaySignal(root);
   }
 
+  function showStorageWarning() {
+    if (storagePersistent) return;
+    const hint = document.querySelector('.power-hint');
+    if (!hint || hint.querySelector('[data-storage-warning]')) return;
+    const warning = document.createElement('span');
+    warning.dataset.storageWarning = 'true';
+    warning.textContent = '⚠ 저장 기능을 사용할 수 없습니다. 새로고침하면 복구 기록이 사라질 수 있습니다.';
+    warning.style.display = 'inline-block';
+    warning.style.marginTop = '6px';
+    hint.appendChild(document.createElement('br'));
+    hint.appendChild(warning);
+  }
+
   window.addEventListener('DOMContentLoaded', () => {
+    showStorageWarning();
     enhanceArchiveUI();
     const windows = document.getElementById('windows');
     if (!windows) return;
