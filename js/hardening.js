@@ -2,6 +2,7 @@
    SeoulOS 98 — Final Project Hardening
    - '오늘의 파일'을 Asia/Seoul 달력 날짜 기준으로 고정
    - 8개 seriesOrder 고정 슬롯으로 날짜→기억 매핑 안정화
+   - 검증된 최종 오디오 맵을 런타임에 병합
    - 확정 콘텐츠 메타데이터 런타임 QA
    - 세계관 FILE DATE와 실제 SOURCE CAPTURED를 UI에서 구분
    - localhost에서 운영 자산을 몰래 참조하지 않도록 asset 경로 하드닝
@@ -86,6 +87,33 @@
     };
   }
 
+  async function mergeFinalAudio(db) {
+    try {
+      const res = await fetch('content/audio-final.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      const map = payload && payload.audio ? payload.audio : {};
+      const memories = Array.isArray(db && db.memories) ? db.memories : [];
+      let merged = 0;
+
+      memories.forEach(mem => {
+        if (!mem || !mem.id || !map[mem.id]) return;
+        const entry = map[mem.id];
+        if (!entry.sound || !entry.meta) return;
+        mem.sound = entry.sound;
+        mem.audio = { ...entry.meta };
+        merged += 1;
+      });
+
+      window.SeoulOSAudioMap = { loaded: true, merged };
+      console.info(`[SeoulOS Audio] final audio map merged: ${merged}`);
+    } catch (error) {
+      window.SeoulOSAudioMap = { loaded: false, merged: 0, error: String(error && error.message || error) };
+      console.warn('[SeoulOS Audio] final audio map could not be loaded. Base memory data is unchanged.', error);
+    }
+    return db;
+  }
+
   function validateContent(db) {
     const errors = [];
     const warnings = [];
@@ -149,6 +177,7 @@
       seoulDate: seoulDateKey(),
       memoryCount: memories.length,
       storagePersistent,
+      audioMap: window.SeoulOSAudioMap || null,
       errors,
       warnings,
       pass: errors.length === 0
@@ -160,11 +189,12 @@
     return report;
   }
 
-  // Content.load가 끝난 직후 QA를 자동 실행한다.
+  // 기본 콘텐츠를 읽은 뒤 최종 오디오 맵을 병합하고 QA한다.
   if (typeof Content !== 'undefined' && typeof Content.load === 'function') {
     const originalLoad = Content.load.bind(Content);
     Content.load = async function hardenedLoad() {
       const db = await originalLoad();
+      await mergeFinalAudio(db);
       validateContent(db);
       return db;
     };
