@@ -131,6 +131,44 @@
         "candidateLocation": "Not Seoul / representative ambience only",
         "note": "해질녘의 새·도시 원거리 소리·바람종이 섞인 대표 환경음. 실제 옥인동 녹음으로 표기하면 안 됩니다."
       }
+    },
+    {
+      "id": "mem_underground",
+      "seriesOrder": 6,
+      "theme": "사람이 빠져나간 지하상가",
+      "role": "빈 공간",
+      "memoryEra": "2000",
+      "date": "2000-12-08",
+      "title": "GOTOMALL_MIDNIGHT_006",
+      "ext": "jpg",
+      "author": "sample",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/7/74/Gotomall_Underground_Shopping_Mall_at_Midnight.jpg",
+      "sound": null,
+      "place": "고투몰, 서울고속버스터미널, 서울",
+      "type": "night",
+      "corrupt": false,
+      "text": "한밤중의 긴 지하 통로에는\n사람의 움직임이 멈춘 뒤의 공간만 남는다.\n낮에는 짧게 지나치던 거리가\n비어 있을 때는 훨씬 길어 보인다.\n\n도시는 사람이 사라진 뒤에도\n한동안 자신의 소리를 품고 있다.",
+      "source": {
+        "capturedAt": "2022-08-14",
+        "place": "Gotomall, Seoul Express Bus Terminal, Seoul, South Korea",
+        "title": "Gotomall Underground Shopping Mall at Midnight.jpg",
+        "creator": "Tildin Han",
+        "url": "https://commons.wikimedia.org/wiki/File:Gotomall_Underground_Shopping_Mall_at_Midnight.jpg",
+        "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/7/74/Gotomall_Underground_Shopping_Mall_at_Midnight.jpg",
+        "license": "CC BY-SA 4.0",
+        "note": "파일 제목과 설명은 고투몰의 자정 무렵을 기록한 사진임을 명시합니다. 실제 촬영일과 SeoulOS FILE DATE는 별개입니다."
+      },
+      "audio": {
+        "status": "pending_asset",
+        "origin": "representative_ambience",
+        "candidateTitle": "Mall Corridor, Loud Hum",
+        "candidateCreator": "ecfike",
+        "candidateUrl": "https://freesound.org/people/ecfike/sounds/479428/",
+        "candidateLicense": "CC0",
+        "candidateDuration": "187.152s",
+        "candidateLocation": "Not Seoul / mall corridor recording",
+        "note": "조용한 쇼핑몰 복도와 큰 저주파성 기계음이 담긴 대표 환경음입니다. 실제 고투몰 녹음으로 표기하면 안 됩니다."
+      }
     }
   ],
 
