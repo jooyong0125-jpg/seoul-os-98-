@@ -2,7 +2,7 @@
    SeoulOS 98 — Final Project Hardening
    - '오늘의 파일'을 Asia/Seoul 달력 날짜 기준으로 고정
    - 8개 seriesOrder 고정 슬롯으로 날짜→기억 매핑 안정화
-   - 검증된 최종 오디오 맵을 런타임에 병합
+   - 보충 기억 슬롯과 검증된 최종 오디오 맵을 런타임에 병합
    - 확정 콘텐츠 메타데이터 런타임 QA
    - 세계관 FILE DATE와 실제 SOURCE CAPTURED를 UI에서 구분
    - localhost에서 운영 자산을 몰래 참조하지 않도록 asset 경로 하드닝
@@ -56,15 +56,11 @@
   window.SeoulOSStorage = { persistent: storagePersistent };
 
   if (typeof Content !== 'undefined') {
-    // 로컬 개발에서 없는 자산을 운영 Vercel에서 대신 가져오면 QA가 거짓 PASS가 된다.
-    // 원격 URL은 그대로 두고, 프로젝트 내부 경로는 현재 origin 기준으로만 해석한다.
     Content.assetUrl = function hardenedAssetUrl(path) {
       if (!path || /^(https?:|data:|blob:)/i.test(path)) return path || '';
       return String(path).replace(/^\/+/, '');
     };
 
-    // 날짜→기억 매핑은 배열 길이나 배열 순서가 아니라 1~8 고정 슬롯으로 계산한다.
-    // 이렇게 하면 새 기억을 추가하거나 JSON 배열을 재정렬해도 이미 존재하는 날짜의 목표 슬롯은 변하지 않는다.
     Content.todays = function todaysInSeoul() {
       const memories = Content.db.memories || [];
       if (!memories.length) return null;
@@ -74,17 +70,38 @@
       const exact = memories.find(mem => mem && mem.seriesOrder === targetOrder);
       if (exact) return exact;
 
-      // 제작 중 누락 슬롯이 있을 때만 임시 fallback. 8개가 완성되면 이 분기는 사용되지 않는다.
       const ordered = memories
         .filter(mem => mem && Number.isInteger(mem.seriesOrder))
         .slice()
         .sort((a, b) => a.seriesOrder - b.seriesOrder);
-      if (ordered.length) {
-        return ordered.find(mem => mem.seriesOrder > targetOrder) || ordered[0];
-      }
-
+      if (ordered.length) return ordered.find(mem => mem.seriesOrder > targetOrder) || ordered[0];
       return memories[0];
     };
+  }
+
+  async function mergeSupplementalMemories(db) {
+    try {
+      const res = await fetch('content/supplemental-memories.json', { cache: 'no-store' });
+      if (res.status === 404) return db;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      const incoming = Array.isArray(payload && payload.memories) ? payload.memories : [];
+      const memories = Array.isArray(db && db.memories) ? db.memories : [];
+      let merged = 0;
+
+      incoming.forEach(mem => {
+        if (!mem || !mem.id || memories.some(existing => existing && existing.id === mem.id)) return;
+        memories.push(mem);
+        merged += 1;
+      });
+      memories.sort((a, b) => (a.seriesOrder || 999) - (b.seriesOrder || 999));
+      window.SeoulOSSupplemental = { loaded: true, merged };
+      console.info(`[SeoulOS Content] supplemental memories merged: ${merged}`);
+    } catch (error) {
+      window.SeoulOSSupplemental = { loaded: false, merged: 0, error: String(error && error.message || error) };
+      console.warn('[SeoulOS Content] supplemental memories could not be loaded.', error);
+    }
+    return db;
   }
 
   async function mergeFinalAudio(db) {
@@ -135,9 +152,7 @@
         if (!mem[field]) errors.push(`${label}: ${field}가 없습니다.`);
       });
 
-      if (mem.type && !types[mem.type]) {
-        errors.push(`${label}: 정의되지 않은 type '${mem.type}' 입니다.`);
-      }
+      if (mem.type && !types[mem.type]) errors.push(`${label}: 정의되지 않은 type '${mem.type}' 입니다.`);
 
       if (mem.seriesOrder != null) {
         if (!Number.isInteger(mem.seriesOrder) || mem.seriesOrder < 1 || mem.seriesOrder > SERIES_SIZE) {
@@ -149,7 +164,6 @@
         }
       }
 
-      // 시리즈에 실제로 투입되는 확정 기록은 provenance가 없으면 공개 금지 대상으로 본다.
       if (mem.author === 'user' && mem.seriesOrder != null) {
         if (!mem.source) {
           errors.push(`${label}: 확정 기록인데 source 메타데이터가 없습니다.`);
@@ -158,18 +172,14 @@
             if (!mem.source[field]) errors.push(`${label}: source.${field}가 없습니다.`);
           });
         }
-        if (mem.sound && !mem.audio) {
-          errors.push(`${label}: sound가 있지만 audio provenance가 없습니다.`);
-        }
+        if (mem.sound && !mem.audio) errors.push(`${label}: sound가 있지만 audio provenance가 없습니다.`);
       }
 
       if (mem.audio && mem.audio.origin && !ALLOWED_AUDIO_ORIGINS.has(mem.audio.origin)) {
         errors.push(`${label}: audio.origin '${mem.audio.origin}' 값이 허용 목록에 없습니다.`);
       }
 
-      if (mem.author === 'sample' && mem.seriesOrder != null) {
-        warnings.push(`${label}: 시리즈 번호가 있지만 아직 sample 상태입니다.`);
-      }
+      if (mem.author === 'sample' && mem.seriesOrder != null) warnings.push(`${label}: 시리즈 번호가 있지만 아직 sample 상태입니다.`);
     });
 
     const report = {
@@ -177,6 +187,7 @@
       seoulDate: seoulDateKey(),
       memoryCount: memories.length,
       storagePersistent,
+      supplemental: window.SeoulOSSupplemental || null,
       audioMap: window.SeoulOSAudioMap || null,
       errors,
       warnings,
@@ -189,11 +200,11 @@
     return report;
   }
 
-  // 기본 콘텐츠를 읽은 뒤 최종 오디오 맵을 병합하고 QA한다.
   if (typeof Content !== 'undefined' && typeof Content.load === 'function') {
     const originalLoad = Content.load.bind(Content);
     Content.load = async function hardenedLoad() {
       const db = await originalLoad();
+      await mergeSupplementalMemories(db);
       await mergeFinalAudio(db);
       validateContent(db);
       return db;
@@ -226,9 +237,7 @@
     if (state && mem.author === 'user') {
       const captured = mem.source && mem.source.capturedAt ? shortDate(mem.source.capturedAt) : null;
       state.textContent = captured ? `확정 기록 · SRC ${captured}` : '확정 기록';
-      if (mem.source) {
-        state.title = [mem.source.creator, mem.source.license, mem.source.place].filter(Boolean).join(' · ');
-      }
+      if (mem.source) state.title = [mem.source.creator, mem.source.license, mem.source.place].filter(Boolean).join(' · ');
     }
 
     const photo = win.querySelector('.archive-photo img');
