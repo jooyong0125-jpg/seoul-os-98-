@@ -32,8 +32,11 @@ jobs:
             node --check "$file"
           done
 
-      - name: Validate memory content and asset formats
+      - name: Validate memory content and local asset formats
         run: node scripts/validate-content.mjs
+
+      - name: Verify remote archival images and audio media
+        run: node scripts/check-remote-media.mjs
 
       - name: Report final release readiness
         continue-on-error: true
