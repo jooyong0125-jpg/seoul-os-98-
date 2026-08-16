@@ -83,16 +83,41 @@
     },
     {
       "id": "mem_sign",
+      "seriesOrder": 3,
+      "theme": "사라지는 오래된 간판",
+      "role": "글자",
+      "memoryEra": "2001",
       "date": "2001-02-14",
-      "title": "간판_손상본_00088",
+      "title": "EULJIRO_SIGNCRAFT_003",
       "ext": "jpg",
       "author": "sample",
-      "image": "assets/img/mem_sign.jpg",
-      "sound": "assets/audio/amb_neon.mp3",
-      "place": "철거된 상가",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/e/e7/%ED%83%9C%EA%B4%91%EB%AA%85%ED%8C%90.jpg",
+      "sound": null,
+      "place": "을지로, 서울",
       "type": "night",
       "corrupt": false,
-      "text": "손으로 쓴 글씨,\n반쯤 깨진 네온,\n녹슨 철제 간판.\n\n이 가게의 이름을\n기억하는 사람이 있을까."
+      "text": "거리의 이름은 지도보다 먼저\n가게 앞 글자에 남는다.\n금속과 인쇄가 만나는 작은 작업장에서\n한 상호의 모양이 만들어진다.\n\n간판은 장소를 설명하는 표지이면서\n그곳에 사람이 있었다는 기록이다.",
+      "source": {
+        "capturedAt": "2022-04-29T13:55:11+09:00",
+        "place": "Euljiro district, Seoul, South Korea",
+        "title": "태광명판.jpg",
+        "creator": "Aaaatu",
+        "url": "https://commons.wikimedia.org/wiki/File:%ED%83%9C%EA%B4%91%EB%AA%85%ED%8C%90.jpg",
+        "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e7/%ED%83%9C%EA%B4%91%EB%AA%85%ED%8C%90.jpg",
+        "license": "CC BY-SA 4.0",
+        "note": "Commons는 이 사진을 을지로의 간판 제작업체 태광명판으로 설명하며, 금속가공과 인쇄가 결합되는 명판 업종을 기록합니다. 사진 메타데이터만으로 간판의 연식이나 실제 폐업·철거 여부는 증명되지 않으므로 '사라졌다'고 단정하지 않습니다. 현재는 FILE 03의 글자·간판 제작 흔적 후보입니다."
+      },
+      "audio": {
+        "status": "pending_asset",
+        "origin": "representative_ambience",
+        "candidateTitle": "Neon Lamp, Switch On, Hum",
+        "candidateCreator": "Kinoton",
+        "candidateUrl": "https://freesound.org/people/Kinoton/sounds/351430/",
+        "candidateLicense": "CC0",
+        "candidateDuration": "26.404s",
+        "candidateLocation": "Not Seoul / close-recorded electric lamp hum",
+        "note": "50Hz 전기 램프 험의 대표 효과음입니다. 실제 태광명판 또는 서울 현장음으로 표기하면 안 되며, 제작자 별도 이용약관도 최종 사용 전에 다시 확인해야 합니다."
+      }
     },
     {
       "id": "mem_hillside",
