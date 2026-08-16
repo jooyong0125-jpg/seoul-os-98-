@@ -8,6 +8,9 @@ const warnings = [];
 
 function fail(message) { errors.push(message); }
 function warn(message) { warnings.push(message); }
+function readJsonIfExists(filePath) {
+  return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf8')) : null;
+}
 
 function detectFileType(filePath) {
   const data = fs.readFileSync(filePath);
@@ -52,6 +55,33 @@ try {
 }
 
 const memories = Array.isArray(db.memories) ? db.memories : [];
+const supplemental = readJsonIfExists(path.join(root, 'content', 'supplemental-memories.json'));
+for (const mem of Array.isArray(supplemental?.memories) ? supplemental.memories : []) {
+  if (!mem?.id) {
+    fail('supplemental memory에 id가 없습니다.');
+    continue;
+  }
+  if (memories.some(existing => existing?.id === mem.id)) {
+    fail(`${mem.id}: base/supplemental memory id가 중복됩니다.`);
+    continue;
+  }
+  memories.push(mem);
+}
+
+const audioPayload = readJsonIfExists(path.join(root, 'content', 'audio-final.json'));
+const audioMap = audioPayload?.audio || {};
+for (const mem of memories) {
+  const entry = mem?.id ? audioMap[mem.id] : null;
+  if (!entry) continue;
+  if (!entry.sound || !entry.meta) {
+    fail(`${mem.id}: audio-final 항목에 sound 또는 meta가 없습니다.`);
+    continue;
+  }
+  mem.sound = entry.sound;
+  mem.audio = { ...entry.meta };
+}
+memories.sort((a, b) => (a?.seriesOrder || 999) - (b?.seriesOrder || 999));
+
 const types = db.types || {};
 const ids = new Set();
 const orders = new Set();
@@ -82,22 +112,26 @@ for (const [index, mem] of memories.entries()) {
     }
   }
 
-  if (mem.author === 'user' && mem.seriesOrder != null) {
+  if (mem.seriesOrder != null) {
     for (const field of ['theme','role','memoryEra','date']) {
-      if (!mem[field]) fail(`${label}: 확정 시리즈 기록에 ${field}가 없습니다.`);
+      if (!mem[field]) fail(`${label}: 시리즈 기록에 ${field}가 없습니다.`);
     }
     if (!mem.source) {
-      fail(`${label}: 확정 시리즈 기록에 source가 없습니다.`);
+      fail(`${label}: 시리즈 기록에 source가 없습니다.`);
     } else {
       for (const field of ['capturedAt','place','creator','url','license']) {
         if (!mem.source[field]) fail(`${label}: source.${field}가 없습니다.`);
       }
     }
-    if (mem.sound && !mem.audio) fail(`${label}: sound가 있지만 audio provenance가 없습니다.`);
+    if (!mem.sound) fail(`${label}: 최종 오디오 맵 병합 후 sound가 없습니다.`);
+    if (!mem.audio) fail(`${label}: 최종 오디오 맵 병합 후 audio provenance가 없습니다.`);
   }
 
   if (mem.audio?.origin && !allowedAudioOrigins.has(mem.audio.origin)) {
     fail(`${label}: 허용되지 않은 audio.origin '${mem.audio.origin}' 입니다.`);
+  }
+  if (mem.audio?.status && mem.audio.status !== 'final') {
+    fail(`${label}: 병합된 audio.status가 '${mem.audio.status}' 입니다.`);
   }
 
   if (mem.author === 'sample' && mem.seriesOrder != null) {
@@ -106,6 +140,10 @@ for (const [index, mem] of memories.entries()) {
 
   validateLocalAsset(label, 'image', mem.image);
   if (mem.sound) validateLocalAsset(label, 'sound', mem.sound);
+}
+
+for (let order = 1; order <= 8; order += 1) {
+  if (!orders.has(order)) fail(`FILE ${order} 슬롯이 비어 있습니다.`);
 }
 
 const corruptedIds = new Set();
@@ -126,4 +164,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`SeoulOS content QA PASS — ${memories.length} memories checked, ${ids.size} unique IDs.`);
+console.log(`SeoulOS content QA PASS — ${memories.length} memories checked, ${ids.size} unique IDs, ${orders.size}/8 series slots.`);
