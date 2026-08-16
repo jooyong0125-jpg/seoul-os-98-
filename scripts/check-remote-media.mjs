@@ -14,6 +14,9 @@ const errors = [];
 function isRemote(value) {
   return /^https?:/i.test(String(value || ''));
 }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 for (const mem of memories) {
   if (isRemote(mem?.image)) jobs.push({ id: mem.id, kind: 'image', url: mem.image });
@@ -29,19 +32,26 @@ function detect(bytes) {
   return 'unknown';
 }
 
-async function fetchPrefix(url) {
+async function requestPrefix(url) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), 20000);
   try {
     const response = await fetch(url, {
       method: 'GET',
       redirect: 'follow',
       headers: {
         Range: 'bytes=0-63',
-        'User-Agent': 'SeoulOS98-QA/1.0'
+        'User-Agent': 'SeoulOS98-QA/1.0 (portfolio media integrity check)'
       },
       signal: controller.signal
     });
+
+    if (response.status === 429) {
+      const retryAfter = Number(response.headers.get('retry-after'));
+      try { await response.body?.cancel(); } catch {}
+      return { rateLimited: true, retryAfter: Number.isFinite(retryAfter) ? retryAfter : null };
+    }
+
     if (!response.ok && response.status !== 206) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -57,6 +67,7 @@ async function fetchPrefix(url) {
     }
 
     return {
+      rateLimited: false,
       status: response.status,
       type: response.headers.get('content-type') || '',
       detected: detect(bytes),
@@ -65,6 +76,22 @@ async function fetchPrefix(url) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchPrefix(url) {
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const result = await requestPrefix(url);
+    if (!result.rateLimited) return result;
+    if (attempt === maxAttempts) throw new Error('HTTP 429 after retries');
+
+    const delay = result.retryAfter
+      ? Math.min(result.retryAfter * 1000, 15000)
+      : 1200 * (2 ** (attempt - 1));
+    console.log(`RETRY rate-limit (${attempt}/${maxAttempts - 1}) in ${delay}ms — ${url}`);
+    await sleep(delay);
+  }
+  throw new Error('unreachable');
 }
 
 async function check(job) {
@@ -84,7 +111,11 @@ async function check(job) {
   }
 }
 
-await Promise.all(jobs.map(check));
+// Wikimedia는 짧은 병렬 Range 요청에도 429를 낼 수 있어 의도적으로 순차 검사한다.
+for (const job of jobs) {
+  await check(job);
+  if (job.kind === 'image') await sleep(500);
+}
 
 if (errors.length) {
   console.error(`\nRemote media QA FAILED (${errors.length})`);
