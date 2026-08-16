@@ -1,21 +1,45 @@
 {
-  "_README": "════════════════════════════════════════════════════════════════════ SeoulOS 98 · 기억 파일 데이터베이스 ════════════════════════════════════════════════════════════════════  ⚠️ 매우 중요 (콘텐츠 성역 규칙) ⚠️  · 이 파일은 '오늘의 기억 파일'로 보여줄 콘텐츠 목록입니다. · 각 항목의 \"author\" 값이 무엇인지가 규칙을 결정합니다.   - author: \"sample\"  → AI가 임시로 채워둔 샘플. 자유롭게 교체/삭제 가능.   - author: \"user\"    → 사용자가 직접 넣은 콘텐츠. ❗ 절대 수정·삭제·이동 금지 (성역).  · 새 기억을 추가하려면 아래 memories 배열에 항목을 하나 더 추가하고   \"author\": \"user\" 로 표시하세요. 그러면 어떤 자동 작업에서도 보호됩니다.  · 필드 설명:   id      : 고유 식별자 (영문/숫자/언더스코어)   date    : 파일 날짜 (YYYY-MM-DD, 표시용)   title   : 파일 이름 (탐색기·타이틀바에 표시)   ext     : 확장자 표시용 (jpg/png 등)   image   : 사진 경로 (assets/img/… 또는 외부 URL)   sound   : 소리 경로 (assets/audio/… , 없으면 null)   text    : 감성 문장 (여러 줄은 \\n)   place   : 장소 이름 (선택)   type    : 이 기억이 매핑되는 서울 성향 키 (night/market/alley/hill)   corrupt : true면 손상 파일(LOST+FOUND). 기본 false ════════════════════════════════════════════════════════════════════",
+  "_README": "════════════════════════════════════════════════════════════════════ SeoulOS 98 · 기억 파일 데이터베이스 ════════════════════════════════════════════════════════════════════  ⚠️ 콘텐츠 성역 규칙 ⚠️  · author: \"sample\" → 임시 샘플. 교체/삭제 가능.  · author: \"user\" → 사용자가 확정한 콘텐츠. 자동 작업에서 수정·삭제 금지.  · date는 SeoulOS 세계관 안의 파일 날짜/기억 시대를 표현하는 표시용 값이며, 실제 사진 촬영일을 뜻하지 않습니다.  · 실제 자료의 촬영일·장소·제작자·라이선스는 source 객체에 별도로 기록합니다.  · 오디오가 해당 장소에서 직접 녹음된 것이 아닐 경우 audio.origin으로 명확히 구분합니다.  · 핵심 필드: id/date/title/ext/author/image/sound/text/place/type/corrupt.  · provenance 필드: seriesOrder/theme/role/source/audio. ════════════════════════════════════════════════════════════════════",
 
-  "version": 1,
+  "version": 2,
 
   "memories": [
     {
       "id": "mem_alley",
-      "date": "1998-11-03",
-      "title": "잊혀진골목_00317",
+      "seriesOrder": 1,
+      "theme": "을지로 밤",
+      "role": "빛",
+      "date": "SEOUL-OS-98",
+      "title": "EULJIRO_NIGHT_001",
       "ext": "jpg",
-      "author": "sample",
+      "author": "user",
       "image": "assets/img/mem_alley.jpg",
       "sound": "assets/audio/amb_alley_night.mp3",
-      "place": "서울 어딘가의 뒷골목",
+      "place": "을지로, 서울",
       "type": "alley",
       "corrupt": false,
-      "text": "1998년의 밤.\n간판 불빛은 아직 켜져 있었고,\n젖은 바닥엔 네온이 번졌다.\n\n지금 이 골목은\n검색해도 나오지 않는다."
+      "text": "을지로의 저녁.\n사람들의 목소리와 식기 부딪히는 소리가\n골목의 불빛 사이에 오래 남는다.\n\n사라지는 것은 장소보다\n그 안에서 반복되던 생활일지도 모른다.",
+      "source": {
+        "capturedAt": "2023-05-20T18:37:00+09:00",
+        "place": "Euljiro, Seoul, South Korea",
+        "title": "Night of Euljiro Alley.jpg",
+        "creator": "Seoul Tourism Archive / Seoul Tourism Organization",
+        "url": "https://commons.wikimedia.org/wiki/File:Night_of_Euljiro_Alley.jpg",
+        "license": "KOGL Type 1 (Attribution)",
+        "note": "실제 사진 촬영일과 SeoulOS 세계관의 파일 날짜는 별개입니다."
+      },
+      "audio": {
+        "origin": "actual_seoul_representative",
+        "baseTitle": "Street food at Ewha",
+        "baseCreator": "bmoreno",
+        "baseUrl": "https://freesound.org/people/bmoreno/sounds/157474/",
+        "baseLicense": "CC BY 4.0",
+        "baseLocation": "Ewha area, Seoul, South Korea",
+        "effectTitle": "Manual roller shutter closing out 1",
+        "effectUrl": "https://bigsoundbank.com/manual-roller-shutter-closing-out-1-s2474.html",
+        "effectLicense": "CC0",
+        "note": "을지로 현장 직접 녹음이 아니라 실제 서울의 대표 거리음에 실제 수동 셔터음을 편집한 사운드입니다."
+      }
     },
     {
       "id": "mem_market",
