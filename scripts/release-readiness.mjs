@@ -54,6 +54,12 @@ function audioIsReleaseReady(value) {
   if (!isRemote(value)) return String(value).startsWith('assets/audio/');
   return isApprovedRemoteAudio(value);
 }
+function audioHasLicense(audio) {
+  return Boolean(audio?.license || audio?.baseLicense || audio?.effectLicense);
+}
+function audioHasSourcePage(audio) {
+  return Boolean(audio?.pageUrl || audio?.baseUrl || audio?.effectUrl || audio?.mediaUrl);
+}
 
 mergeSupplementalMemories();
 mergeFinalAudio();
@@ -92,8 +98,8 @@ for (const mem of memories) {
   } else {
     if (mem.audio.status && mem.audio.status !== 'final') block(`${label}: audio.status가 '${mem.audio.status}'입니다.`);
     if (!mem.audio.origin) block(`${label}: audio.origin이 없습니다.`);
-    if (!mem.audio.license) block(`${label}: audio.license가 없습니다.`);
-    if (!mem.audio.pageUrl) block(`${label}: audio.pageUrl이 없습니다.`);
+    if (!audioHasLicense(mem.audio)) block(`${label}: audio license provenance가 없습니다.`);
+    if (!audioHasSourcePage(mem.audio)) block(`${label}: audio source URL provenance가 없습니다.`);
   }
 
   if (mem?.image && !imageIsReleaseReady(mem.image)) block(`${label}: image는 로컬 assets/img 또는 승인된 공공 아카이브 원본이어야 합니다.`);
