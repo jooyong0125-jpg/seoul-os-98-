@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "note": "Final audio delivery map. These sounds are intentionally labeled by origin; representative ambience must never be presented as an on-location Seoul recording.",
+  "audio": {
+    "mem_market": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/3347.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Covered market #2",
+        "creator": "Joseph SARDIN & Axeline T.",
+        "pageUrl": "https://bigsoundbank.com/covered-market-2-s3347.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/3347.mp3",
+        "license": "CC0",
+        "location": "Levallois-Perret, France / representative indoor market ambience",
+        "note": "광장시장 직접 녹음이 아닙니다. 실내 시장의 사람·공간감을 위한 대표 환경음으로만 사용합니다."
+      }
+    },
+    "mem_sign": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/2119.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Neon or transformer #2",
+        "creator": "Joseph SARDIN",
+        "pageUrl": "https://bigsoundbank.com/neon-or-transformer-2-s2119.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/2119.mp3",
+        "license": "CC0",
+        "location": "Not Seoul / representative electrical buzz",
+        "note": "을지로 현장음이 아니라 간판·전기 설비의 질감을 위한 대표 전기 험입니다."
+      }
+    },
+    "mem_hillside": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/0680.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Paris by Night",
+        "creator": "Joseph SARDIN",
+        "pageUrl": "https://bigsoundbank.com/paris-by-night-s0680.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/0680.mp3",
+        "license": "CC0",
+        "location": "Paris, France / representative night-city ambience",
+        "note": "옥인동 직접 녹음이 아닙니다. 멀리서 들리는 야간 도시 소리를 위한 대표 환경음입니다."
+      }
+    },
+    "mem_underground": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/0093.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Metro corridor, Paris #1",
+        "creator": "Joseph SARDIN",
+        "pageUrl": "https://bigsoundbank.com/metro-corridor-paris-1-s0093.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/0093.mp3",
+        "license": "CC0",
+        "location": "Paris, France / representative underground corridor ambience",
+        "note": "고투몰 직접 녹음이 아닙니다. 비어 있는 지하 통로의 발걸음·잔향을 위한 대표 환경음입니다."
+      }
+    },
+    "mem_apartment": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/2388.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Apartment open window",
+        "creator": "Joseph SARDIN",
+        "pageUrl": "https://bigsoundbank.com/apartment-open-window-s2388.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/2388.mp3",
+        "license": "CC0",
+        "location": "Not Seoul / representative apartment ambience",
+        "note": "우성아파트 직접 녹음이 아닙니다. 자동차·배관·생활 소리가 섞인 주거 환경의 대표 음향입니다."
+      }
+    },
+    "mem_disappearance": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/1638.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Roadworks #5",
+        "creator": "Joseph SARDIN",
+        "pageUrl": "https://bigsoundbank.com/roadworks-5-s1638.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/1638.mp3",
+        "license": "CC0",
+        "location": "Not Seoul / representative construction ambience",
+        "note": "구룡마을 직접 녹음이 아닙니다. 굴착기와 작업자의 원거리 공사음을 대표 환경음으로 사용합니다."
+      }
+    },
+    "mem_sewoon": {
+      "sound": "https://bigsoundbank.com/UPLOAD/mp3/0503.mp3",
+      "meta": {
+        "status": "final",
+        "origin": "representative_ambience",
+        "title": "Industry Workshop",
+        "creator": "Joseph SARDIN",
+        "pageUrl": "https://bigsoundbank.com/industry-workshop-s0503.html",
+        "mediaUrl": "https://bigsoundbank.com/UPLOAD/mp3/0503.mp3",
+        "license": "CC0",
+        "location": "Not Seoul / representative workshop ambience",
+        "note": "세운상가 직접 녹음이 아닙니다. 기계·부품·작업대의 노동감을 위한 대표 작업장 환경음입니다."
+      }
+    }
+  }
+}
