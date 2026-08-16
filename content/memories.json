@@ -169,6 +169,44 @@
         "candidateLocation": "Not Seoul / mall corridor recording",
         "note": "조용한 쇼핑몰 복도와 큰 저주파성 기계음이 담긴 대표 환경음입니다. 실제 고투몰 녹음으로 표기하면 안 됩니다."
       }
+    },
+    {
+      "id": "mem_disappearance",
+      "seriesOrder": 8,
+      "theme": "철거를 기다리는 동네",
+      "role": "소멸",
+      "memoryEra": "2001",
+      "date": "2001-11-29",
+      "title": "GURYONG_WAITING_008",
+      "ext": "jpg",
+      "author": "sample",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Guryong_village_alley.jpg",
+      "sound": null,
+      "place": "구룡마을, 강남, 서울",
+      "type": "alley",
+      "corrupt": false,
+      "text": "골목에는 아직 자전거와 생활의 흔적이 남아 있다.\n하지만 이곳의 시간은\n다음 도시계획을 기다리는 중이다.\n\n사라짐은 철거기가 들어오는 순간보다\n사람이 하나씩 떠나는 동안 먼저 시작된다.",
+      "source": {
+        "capturedAt": "2022-04-24T08:57:00+09:00",
+        "place": "Guryong Village, Gangnam-gu, Seoul, South Korea",
+        "title": "Guryong village alley.jpg",
+        "creator": "Aaaatu / Aatu Dorochenko",
+        "url": "https://commons.wikimedia.org/wiki/File:Guryong_village_alley.jpg",
+        "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Guryong_village_alley.jpg",
+        "license": "CC BY-SA 4.0",
+        "note": "사진 자체는 철거 현장이 아니라 2022년 구룡마을의 생활 골목입니다. 당시 구룡마을은 도시개발구역으로 재지정된 뒤 재개발 착공 계획이 지연되고 있었습니다. 따라서 이 기록은 '철거 장면'이 아니라 재개발을 기다리는 동네의 생활 흔적을 다룹니다."
+      },
+      "audio": {
+        "status": "pending_asset",
+        "origin": "representative_ambience",
+        "candidateTitle": "Demolition, Building Side",
+        "candidateCreator": "Kinoton",
+        "candidateUrl": "https://freesound.org/people/Kinoton/sounds/495269/",
+        "candidateLicense": "CC0",
+        "candidateDuration": "355.014s",
+        "candidateLocation": "Not Seoul / representative demolition ambience",
+        "note": "굴착기와 철거 폐기물 작업이 멀리서 들리는 대표 환경음입니다. 실제 구룡마을 녹음으로 표기하면 안 됩니다."
+      }
     }
   ],
 
