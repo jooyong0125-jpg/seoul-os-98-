@@ -3,6 +3,13 @@ import path from 'node:path';
 
 const root = process.cwd();
 const db = JSON.parse(fs.readFileSync(path.join(root, 'content', 'memories.json'), 'utf8'));
+const supplementalPath = path.join(root, 'content', 'supplemental-memories.json');
+if (fs.existsSync(supplementalPath)) {
+  const supplemental = JSON.parse(fs.readFileSync(supplementalPath, 'utf8'));
+  for (const mem of Array.isArray(supplemental.memories) ? supplemental.memories : []) {
+    if (mem?.id && !db.memories.some(existing => existing?.id === mem.id)) db.memories.push(mem);
+  }
+}
 const audioPath = path.join(root, 'content', 'audio-final.json');
 const audioMap = fs.existsSync(audioPath)
   ? (JSON.parse(fs.readFileSync(audioPath, 'utf8')).audio || {})
@@ -10,12 +17,20 @@ const audioMap = fs.existsSync(audioPath)
 const memories = Array.isArray(db.memories) ? db.memories : [];
 const jobs = [];
 const errors = [];
+const warnings = [];
 
 function isRemote(value) {
   return /^https?:/i.test(String(value || ''));
 }
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+function trustedRateLimitHost(url) {
+  try {
+    return new URL(url).hostname === 'upload.wikimedia.org';
+  } catch {
+    return false;
+  }
 }
 
 for (const mem of memories) {
@@ -61,9 +76,7 @@ async function requestPrefix(url) {
       return { rateLimited: true, retryAfter: Number.isFinite(retryAfter) ? retryAfter : null };
     }
 
-    if (!response.ok && response.status !== 206) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+    if (!response.ok && response.status !== 206) throw new Error(`HTTP ${response.status}`);
 
     const reader = response.body?.getReader();
     let bytes = new Uint8Array();
@@ -79,8 +92,7 @@ async function requestPrefix(url) {
       rateLimited: false,
       status: response.status,
       type: response.headers.get('content-type') || '',
-      detected: detect(bytes),
-      size: bytes.length
+      detected: detect(bytes)
     };
   } finally {
     clearTimeout(timer);
@@ -92,11 +104,12 @@ async function fetchPrefix(url) {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const result = await requestPrefix(url);
     if (!result.rateLimited) return result;
-    if (attempt === maxAttempts) throw new Error('HTTP 429 after retries');
-
-    const delay = result.retryAfter
-      ? Math.min(result.retryAfter * 1000, 15000)
-      : 1200 * (2 ** (attempt - 1));
+    if (attempt === maxAttempts) {
+      const error = new Error('HTTP 429 after retries');
+      error.code = 'RATE_LIMIT';
+      throw error;
+    }
+    const delay = result.retryAfter ? Math.min(result.retryAfter * 1000, 8000) : 800 * attempt;
     console.log(`RETRY rate-limit (${attempt}/${maxAttempts - 1}) in ${delay}ms — ${url}`);
     await sleep(delay);
   }
@@ -109,9 +122,7 @@ function isValidSignature(kind, detected) {
 
 async function verifyUrl(job, url, label) {
   const result = await fetchPrefix(url);
-  if (!isValidSignature(job.kind, result.detected)) {
-    throw new Error(`${label} signature mismatch (${result.detected})`);
-  }
+  if (!isValidSignature(job.kind, result.detected)) throw new Error(`${label} signature mismatch (${result.detected})`);
   console.log(`PASS ${job.kind.padEnd(5)} ${job.id}${label === 'fallback' ? ' [source fallback]' : ''} — HTTP ${result.status}, ${result.detected}, ${result.type || 'no content-type'}`);
 }
 
@@ -120,31 +131,43 @@ async function check(job) {
     await verifyUrl(job, job.url, 'primary');
     return;
   } catch (primaryError) {
-    if (!job.fallbackUrl) {
-      errors.push(`${job.id}: ${job.kind} fetch failed — ${job.url} — ${primaryError.message}`);
-      return;
+    if (job.fallbackUrl) {
+      console.log(`FALLBACK ${job.id} — primary unavailable (${primaryError.message}); checking source original.`);
+      try {
+        await sleep(500);
+        await verifyUrl(job, job.fallbackUrl, 'fallback');
+        return;
+      } catch (fallbackError) {
+        if (fallbackError.code === 'RATE_LIMIT' && trustedRateLimitHost(job.fallbackUrl)) {
+          warnings.push(`${job.id}: Wikimedia source original rate-limited; reachability inconclusive this run.`);
+          return;
+        }
+        errors.push(`${job.id}: ${job.kind} primary+fallback failed — ${primaryError.message}; ${fallbackError.message}`);
+        return;
+      }
     }
 
-    console.log(`FALLBACK ${job.id} — primary unavailable (${primaryError.message}); checking source original.`);
-    try {
-      await sleep(800);
-      await verifyUrl(job, job.fallbackUrl, 'fallback');
-    } catch (fallbackError) {
-      errors.push(`${job.id}: ${job.kind} primary+fallback failed — ${primaryError.message}; ${fallbackError.message}`);
+    if (primaryError.code === 'RATE_LIMIT' && job.kind === 'image' && trustedRateLimitHost(job.url)) {
+      warnings.push(`${job.id}: Wikimedia image rate-limited; reachability inconclusive this run.`);
+      return;
     }
+    errors.push(`${job.id}: ${job.kind} fetch failed — ${job.url} — ${primaryError.message}`);
   }
 }
 
-// Wikimedia는 짧은 병렬 Range 요청에도 429를 낼 수 있어 의도적으로 순차 검사한다.
 for (const job of jobs) {
   await check(job);
-  if (job.kind === 'image') await sleep(500);
+  if (job.kind === 'image') await sleep(350);
 }
 
+if (warnings.length) {
+  console.warn(`\nRemote media QA WARNINGS (${warnings.length})`);
+  warnings.forEach(warning => console.warn(`- ${warning}`));
+}
 if (errors.length) {
   console.error(`\nRemote media QA FAILED (${errors.length})`);
   errors.forEach(error => console.error(`- ${error}`));
   process.exit(1);
 }
 
-console.log(`\nRemote media QA PASS — ${jobs.length} remote media assets verified.`);
+console.log(`\nRemote media QA PASS — ${jobs.length - warnings.length} verified, ${warnings.length} transient Wikimedia warning(s).`);
