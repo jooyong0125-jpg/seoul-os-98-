@@ -1,5 +1,5 @@
 {
-  "_README": "════════════════════════════════════════════════════════════════════ SeoulOS 98 · 기억 파일 데이터베이스 ════════════════════════════════════════════════════════════════════  ⚠️ 콘텐츠 성역 규칙 ⚠️  · author: \"sample\" → 임시 샘플. 교체/삭제 가능.  · author: \"user\" → 사용자가 확정한 콘텐츠. 자동 작업에서 수정·삭제 금지.  · date는 SeoulOS 세계관 안의 파일 날짜/기억 시대를 표현하는 표시용 값이며, 실제 사진 촬영일을 뜻하지 않습니다.  · 실제 자료의 촬영일·장소·제작자·라이선스는 source 객체에 별도로 기록합니다.  · 오디오가 해당 장소에서 직접 녹음된 것이 아닐 경우 audio.origin으로 명확히 구분합니다.  · 핵심 필드: id/date/title/ext/author/image/sound/text/place/type/corrupt.  · provenance 필드: seriesOrder/theme/role/source/audio. ════════════════════════════════════════════════════════════════════",
+  "_README": "════════════════════════════════════════════════════════════════════ SeoulOS 98 · 기억 파일 데이터베이스 ════════════════════════════════════════════════════════════════════  ⚠️ 콘텐츠 성역 규칙 ⚠️  · author: \"sample\" → 임시 샘플. 교체/삭제 가능.  · author: \"user\" → 사용자가 확정한 콘텐츠. 자동 작업에서 수정·삭제 금지.  · date는 SeoulOS 세계관 안의 FILE DATE이며 실제 사진 촬영일을 뜻하지 않습니다.  · 실제 자료의 촬영일·장소·제작자·라이선스는 source 객체에 별도로 기록합니다.  · 오디오가 해당 장소에서 직접 녹음된 것이 아닐 경우 audio.origin으로 명확히 구분합니다.  · 핵심 필드: id/date/title/ext/author/image/sound/text/place/type/corrupt.  · provenance 필드: seriesOrder/theme/role/memoryEra/source/audio. ════════════════════════════════════════════════════════════════════",
 
   "version": 2,
 
@@ -9,7 +9,8 @@
       "seriesOrder": 1,
       "theme": "을지로 밤",
       "role": "빛",
-      "date": "SEOUL-OS-98",
+      "memoryEra": "1998",
+      "date": "1998-11-03",
       "title": "EULJIRO_NIGHT_001",
       "ext": "jpg",
       "author": "user",
@@ -26,7 +27,7 @@
         "creator": "Seoul Tourism Archive / Seoul Tourism Organization",
         "url": "https://commons.wikimedia.org/wiki/File:Night_of_Euljiro_Alley.jpg",
         "license": "KOGL Type 1 (Attribution)",
-        "note": "실제 사진 촬영일과 SeoulOS 세계관의 파일 날짜는 별개입니다."
+        "note": "실제 사진 촬영일과 SeoulOS 세계관의 FILE DATE는 별개입니다."
       },
       "audio": {
         "origin": "actual_seoul_representative",
