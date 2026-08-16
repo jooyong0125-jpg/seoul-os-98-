@@ -2,7 +2,7 @@
    SeoulOS 98 — Final Project Hardening
    - '오늘의 파일'을 Asia/Seoul 달력 날짜 기준으로 고정
    - 확정 콘텐츠 메타데이터 런타임 QA
-   - 기존 UI의 '사용자 기록' 라벨을 '확정 기록'으로 정정
+   - 세계관 FILE DATE와 실제 SOURCE CAPTURED를 UI에서 구분
    ========================================================================= */
 (() => {
   'use strict';
@@ -28,6 +28,11 @@
   function dateKeyToDayNumber(key) {
     const [year, month, day] = key.split('-').map(Number);
     return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+  }
+
+  function shortDate(value) {
+    const match = String(value || '').match(/^\d{4}-\d{2}-\d{2}/);
+    return match ? match[0] : String(value || 'UNKNOWN');
   }
 
   // 기존 UTC 기반 Date.now()/86400000 로테이션을 서울의 '달력 날짜' 기준으로 교체한다.
@@ -109,8 +114,8 @@
     };
 
     window.SeoulOSQA = report;
-    const log = report.pass ? console.info : console.error;
-    log('[SeoulOS QA]', report);
+    if (report.pass) console.info('[SeoulOS QA]', report);
+    else console.error('[SeoulOS QA]', report);
     return report;
   }
 
@@ -124,18 +129,61 @@
     };
   }
 
-  // author:user는 '사용자가 촬영했다'는 뜻이 아니라 '프로젝트에서 확정한 기록'이다.
-  function correctArchiveLabels(root = document) {
-    root.querySelectorAll('.archive-source').forEach(el => {
-      if (el.textContent.trim() === '사용자 기록') el.textContent = '확정 기록';
+  function memoryFromViewer(win) {
+    const id = String(win && win.dataset && win.dataset.id || '');
+    if (!id.startsWith('view_')) return null;
+    const memoryId = id.slice(5);
+    return (Content.db.memories || []).find(mem => mem.id === memoryId) || null;
+  }
+
+  function enhanceViewer(win) {
+    const mem = memoryFromViewer(win);
+    if (!mem) return;
+
+    const rows = win.querySelectorAll('.archive-meta > div');
+    rows.forEach(row => {
+      const label = row.querySelector('span');
+      const value = row.querySelector('b');
+      if (!label || !value) return;
+      if (label.textContent.trim() === '수집 일자' || label.textContent.trim() === 'FILE DATE') {
+        label.textContent = 'FILE DATE';
+        value.textContent = mem.date || 'UNKNOWN';
+      }
     });
+
+    const state = win.querySelector('.archive-source');
+    if (state && mem.author === 'user') {
+      const captured = mem.source && mem.source.capturedAt ? shortDate(mem.source.capturedAt) : null;
+      state.textContent = captured ? `확정 기록 · SRC ${captured}` : '확정 기록';
+      if (mem.source) {
+        state.title = [mem.source.creator, mem.source.license, mem.source.place].filter(Boolean).join(' · ');
+      }
+    }
+
+    const photo = win.querySelector('.archive-photo img');
+    if (photo && mem.source && mem.source.capturedAt) {
+      photo.title = `SOURCE CAPTURED ${shortDate(mem.source.capturedAt)} · ${mem.source.place || ''}`.trim();
+    }
+  }
+
+  function enhanceTodaySignal(root = document) {
+    const note = root.querySelector('.signalwin .signal-note');
+    if (!note || typeof Content === 'undefined') return;
+    const mem = Content.todays();
+    if (!mem) return;
+    note.textContent = `${mem.place || '서울'} · FILE ${mem.date || 'UNKNOWN'}`;
+  }
+
+  function enhanceArchiveUI(root = document) {
+    root.querySelectorAll('.archive-viewer[data-id^="view_"]').forEach(enhanceViewer);
+    enhanceTodaySignal(root);
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    correctArchiveLabels();
+    enhanceArchiveUI();
     const windows = document.getElementById('windows');
     if (!windows) return;
-    const observer = new MutationObserver(() => correctArchiveLabels(windows));
+    const observer = new MutationObserver(() => enhanceArchiveUI(windows));
     observer.observe(windows, { childList: true, subtree: true });
   });
 })();
